@@ -1,127 +1,95 @@
 # gainsight-mcp-plugins
 
-Claude Code plugins for Customer Success teams that pair the **Staircase AI MCP** (communication intelligence) with the **Gainsight CS MCP** (CRM state and write paths).
+**AI-native workflows for Customer Success teams**, built on top of the Staircase AI and Gainsight CS MCPs.
 
-Single-prompt workflows for things that used to take 30 minutes of manual context-gathering: book pulse, account workspace, post-call processing, executive renewal radar, cross-portfolio pattern hunting.
+This is a library of one-prompt workflows that handle the heavy lifting CSMs and CS leaders do every week: triaging your book, prepping for a meeting, drafting stakeholder outreach, running a renewal radar across your portfolio. Work that takes 30 minutes of clicking through tabs becomes a single conversation.
+
+## Why this exists
+
+CSMs with 20–30 accounts spend most of their week reactive — opening Gainsight to check CTAs, opening Staircase to read recent customer signals, switching to email to draft outreach, back to Gainsight to log a Timeline activity. By the time you've gathered context on one account, half the hour is gone.
+
+When Claude has both MCPs connected, the gathering happens for you. You ask *"what should I work on this week?"* and you get a ranked book pulse with the specific next move per account, drafted email outreach, and ready-to-post CTAs — all approval-gated. Nothing posts to Gainsight without your sign-off.
+
+## What you can do with it
+
+A few examples of prompts that work after install:
+
+- *"Give me my book pulse for this week"* → ranked list of accounts that need attention with the specific lever to pull on each
+- *"Process this meeting transcript"* → drafted Gmail recap + Timeline activity + Risk CTA + Success Plan updates + action items, ready for one-click approval
+- *"I just inherited [account] — onboard me"* → first-90-days plan built from the Staircase Handoff Analysis, stakeholder intros, ready-to-create Onboarding Success Plan
+- *"Show me Strategic-tier renewals at risk in the next 120 days"* → tier-stratified renewal radar with cross-account themes, per-account risk and expansion classification
+- *"Draft outreach to [stakeholder] at [account]"* → personalized email anchored on what Staircase actually knows about the relationship, in your voice
+- *"Find patterns across my portfolio about [theme]"* → cross-account thematic intelligence with customer quotes and evidence
+
+## Who it's for
+
+- **CSMs and Account Managers** — daily and weekly workflows, post-call processing, stakeholder outreach, EBR prep
+- **CS leaders, CROs, VPs** — portfolio strategic views, renewal radar, churn retrospectives, cross-account pattern detection
+- **CS Operations** — book-shaping, methodology validation, output-quality enforcement
+
+The plugin auto-adapts to your role. You run `gainsight-mcp-setup` once at install and the skills scope to what you do.
 
 ---
 
-## Plugins in this repo
+## Get started
 
-| Plugin | What it is | Skills |
-|--------|------------|--------|
-| **`gainsight-cs`** | Customer Success operations plugin. CSMs, AMs, CS leaders, CS Ops. | 13 core (3 foundation + 6 IC + 4 exec) + 4 experimental |
-
-More plugins planned: gainsight-px (Product Experience), gainsight-staircase-cross-product workflows.
-
----
-
-## Install
-
-### Step 1 — Add this marketplace
-
-In Claude Code:
+**1. Install the plugin** (in Claude Code):
 
 ```
 /plugin marketplace add gs-bbluhm/gainsight-mcp-plugins
-```
-
-### Step 2 — Install the plugin
-
-```
 /plugin install gainsight-cs@gainsight-mcp-plugins
 ```
 
-### Step 3 — Verify
+**2. Connect the MCPs** if you haven't already — see [Connect the MCPs](#connect-the-mcps) below.
 
-```
-/plugin list
-```
+**3. Run setup once.** In Claude, type: *"Run gainsight-mcp-setup"*. It walks you through a 2-minute onboarding that adapts to your role and discovers your org's specific Gainsight fields. After this, every skill automatically scopes to your work.
 
-You should see `gainsight-cs` in the output. The plugin's skills become available immediately — start with `gainsight-mcp-setup` for the one-time onboarding (role-adaptive, ~2 minutes), then any other skill works.
+**4. Try something.** Use any of the example prompts above. The right skill loads automatically — you don't need to remember skill names. Describe what you want in your own words.
 
-### Updates
-
-When new versions ship, run:
-
-```
-/plugin update gainsight-cs
-```
-
-The plugin tracks the latest commit on `main`, so every push is a new version users can pull.
+For updates as new versions ship: `/plugin update gainsight-cs`.
 
 ---
 
-## Prerequisites — MCP servers
+## Connect the MCPs
 
-These plugins are useless without the underlying MCPs. You'll need both connected in your Claude client (Claude Desktop or Claude Code). The two MCPs install differently — Staircase AI is an official Anthropic connector; Gainsight CS is a custom connector that requires admin OAuth setup on your Gainsight tenant.
+The plugin needs both MCPs connected in your Claude client (Claude Desktop or Claude Code). They install differently.
 
-### Staircase AI MCP — official Anthropic connector
+### Staircase AI MCP — one-click connector
 
-The Staircase AI MCP is published in Claude's connector directory as **"Gainsight (Staircase AI)"**. No CLI commands or config files required.
-
-**Prerequisites:**
-- A Staircase AI account
-- MCP access enabled at the platform level by your Staircase admin
-
-**Connect:**
+Published in Claude's connector directory as **"Gainsight (Staircase AI)"**.
 
 1. Open Claude → **Settings → Connectors → Browse connectors**
-2. Search for *Staircase* and choose the **Gainsight (Staircase AI)** connector
-3. Click **Connect** and authenticate with Google or Microsoft using your Staircase AI email
-4. Set tool permissions to "Always allow" if you want a seamless workflow
-5. Open a new chat and confirm Staircase AI appears in the connectors list
+2. Search *Staircase* and pick **Gainsight (Staircase AI)**
+3. Click **Connect** and sign in with your Staircase AI email (via Google or Microsoft)
 
-Reference: [Connect Staircase AI to LLMs Using MCP](https://support.gainsight.com/Staircase_AI/Staircase_AI_Features/Connect_Staircase_AI_to_LLMs_Using_MCP) (Gainsight support).
+That's it. Full instructions: [Gainsight support — Connect Staircase AI to LLMs Using MCP](https://support.gainsight.com/Staircase_AI/Staircase_AI_Features/Connect_Staircase_AI_to_LLMs_Using_MCP).
 
-### Gainsight CS MCP — custom connector (admin setup required)
+> If you don't see the connector, your Staircase admin may need to enable MCP access for your org first.
 
-The Gainsight CS MCP is not yet an official Anthropic connector. It must be added as a **custom connector** in Claude, and your Gainsight admin must configure OAuth on the tenant first.
+### Gainsight CS MCP — custom connector (admin sets up once)
 
-**Prerequisites — your Gainsight admin needs to:**
-- Enable MCP access on your tenant
-- Configure OAuth with PKCE in Gainsight (Administration → User Management → Authentication → OAuth Applications)
-- Add these two callback URLs to the OAuth application:
-  - `https://claude.ai/api/mcp/auth_callback`
-  - `https://claude.com/api/mcp/auth_callback`
-- Provide you (or you yourself, if you're the admin) with the Client ID, Client Secret, and your tenant's MCP server URL
+Not yet in Claude's official connector directory. Your Gainsight admin sets it up once for the tenant; then you connect it as a custom connector.
 
-**Connect (after admin setup is complete):**
+**Step 1 (admin, one time):** Your Gainsight admin follows the [Set Up Gainsight CS MCP Server Integration](https://support.gainsight.com/gainsight_nxt/AI_Assistants/MCP_Integration/Admin_Guide/Set_Up_Gainsight_CS_MCP_Server_Integration) guide. They configure OAuth and hand you three things: a Client ID, a Client Secret, and your tenant's MCP server URL.
+
+**Step 2 (you):** Add it as a custom connector in Claude.
 
 1. Open Claude → **Settings → Connectors → Add custom connector**
-2. Enter a name (e.g., "Gainsight CS")
-3. Enter the server URL:
-   ```
-   https://<your-domain>.gainsightcloud.com/v1/ds-mcp/mcp
-   ```
+2. Name it (e.g., "Gainsight CS")
+3. Paste the server URL: `https://<your-domain>.gainsightcloud.com/v1/ds-mcp/mcp`
 4. Paste the Client ID and Client Secret from your admin
-5. Click **Connect** — Claude redirects you to Gainsight to authenticate
-6. Log in with your Gainsight credentials. Claude confirms the connection.
+5. Click **Connect** and sign in with your Gainsight credentials
 
-Full admin setup instructions: [Set Up Gainsight CS MCP Server Integration](https://support.gainsight.com/gainsight_nxt/AI_Assistants/MCP_Integration/Admin_Guide/Set_Up_Gainsight_CS_MCP_Server_Integration) (Gainsight support).
+> Gainsight CS will eventually become an official Anthropic connector. Until then, this custom-connector path is the supported method.
 
-> The Gainsight CS MCP will eventually be published as an official Anthropic connector. Until then, the custom-connector path above is the supported install method.
+### Optional connectors that enhance the experience
 
-### Optional connectors that integrate well
+None are required, but the plugin's meeting-processor and outreach skills get more powerful with any of these connected:
 
-The plugin's meeting-processor + handoff skills pull additional context from these if they're connected:
-
-- **Notion MCP** (meeting notes connector) — for Granola/Zoom/manual meeting transcripts
-- **Gmail MCP** — for email drafting + thread context
-- **Calendar MCP** — for meeting scheduling + EBR coordination
-- **Zoom MCP** — for direct recording / transcript access
-
-These are nice-to-haves, not required.
-
----
-
-## Quick start after install
-
-1. **Run setup once:** prompt Claude with *"run gainsight-mcp-setup"* — a 2-minute role-adaptive onboarding that discovers your org's bespoke fields (segmentation, team-member assignment) and writes a persistent user profile. After this, every skill auto-applies your filter automatically.
-
-2. **Use natural language for any skill.** Describe what you want — Claude matches your prompt to the right skill via its description. You don't need to remember skill names. The example prompts below are what users actually type.
-
-3. **Drill down through chains.** Most workflows compose: book pulse → drill into top account → draft stakeholder outreach → write CTA. Each step is approval-gated.
+- **[Microsoft 365 Connector for Claude](https://support.claude.com/en/articles/12542951-enable-and-use-the-microsoft-365-connector)** — official Anthropic connector covering Outlook (email + calendar), Teams, SharePoint, OneDrive. Free on all Claude plans.
+- **Gmail + Google Calendar connectors** — for users in Google Workspace instead of Microsoft 365.
+- **Notion connector** — surfaces Granola, Zoom, and Notion-captured meeting notes for the meeting-processor skill.
+- **Zoom connector** — direct access to recordings and transcripts.
 
 ---
 
@@ -181,18 +149,6 @@ These live in `_experimental/` with `disable-model-invocation: true`. They don't
 | **`staircase-at-risk-renewals`** | Cross-portfolio at-risk renewal report with health, sentiment, risk evidence per account. | Subsumed by `gainsight-exec-renewal-radar` in most flows. Functional, kept to avoid skill duplication in auto-invocation. |
 | **`staircase-expansion-scout`** | Cross-portfolio expansion scout — accounts with active expansion signals + readiness scoring. | Overlaps with `gainsight-exec-renewal-radar`. |
 | **`staircase-reference-finder`** | Find customer reference candidates for a target account or use case. | Partial; waiting on a portfolio-similarity primitive in the Staircase MCP. |
-
----
-
-## What this enables (concrete examples)
-
-| Prompt | What happens |
-|--------|--------------|
-| *"Process this Granola transcript: [paste]"* | `gainsight-meeting-processor` drafts Gmail recap + Timeline activity + Risk CTA + Success Plan updates + action items + win quotes. Nothing posts without approval. |
-| *"Give me my book pulse"* | `gainsight-csm-book-pulse` runs a unified fan-out + 6-tier composite priority scoring + insight flags. Top 10 ranked with watch list. |
-| *"Show me at-risk renewals across Strategic tier in the next 120 days"* | `gainsight-exec-renewal-radar` runs the tier-stratified view with per-account Risk × Expansion merge classification. |
-| *"Find patterns across my portfolio about [theme]"* | `gainsight-exec-pattern-hunter` runs a 15-account intentional fan-out for cross-portfolio thematic intelligence with evidence IDs. |
-| *"Draft outreach to [stakeholder] anchored on the merge findings"* | `gainsight-stakeholder-connect` produces a personalized email draft with tone discipline (specifics over generalities, customer-focused). Approval-gated. |
 
 ---
 
