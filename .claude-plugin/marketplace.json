@@ -1,0 +1,55 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gainsight-mcp-plugins",
+  "description": "Claude Code plugins pairing the Staircase AI MCP and the Gainsight CS MCP for Customer Success teams.",
+  "owner": {
+    "name": "Brady Bluhm",
+    "email": "bbluhm@gainsight.com",
+    "url": "https://github.com/gs-bbluhm"
+  },
+  "plugins": [
+    {
+      "name": "gainsight-cs",
+      "description": "Customer Success operations plugin pairing the Staircase AI MCP (communication intelligence) with the Gainsight CS MCP (CRM state + write paths). 13 core skills + 4 experimental, organized as foundation (MCP expertise + role-adaptive onboarding) + IC workflows (book pulse, account workspace, meeting processor, handoff, stakeholder outreach, EBR scheduling) + exec workflows (renewal radar, churn retrospective, pattern hunter, renewal priority planner). Cowork-first design with approval gates on every customer-facing write.",
+      "author": {
+        "name": "Brady Bluhm",
+        "email": "bbluhm@gainsight.com"
+      },
+      "category": "customer-success",
+      "version": "0.2.0",
+      "source": "./plugins/gainsight-cs",
+      "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
+      "tags": [
+        "customer-success",
+        "gainsight",
+        "staircase",
+        "csm",
+        "renewal",
+        "expansion",
+        "qbr",
+        "ebr",
+        "exec"
+      ]
+    },
+    {
+      "name": "fun-lifeskills",
+      "description": "Personality-driven life skills for outside-of-work routines. Ships Chef Gordon — a profane, brilliant kitchen tyrant in the spirit of Gordon Ramsay mid-service who walks you through real cooking via targeted verbal abuse and saves the recipes you actually liked. Includes both a Claude Code/Cowork skill (file-based recipe storage) and a copy-paste system prompt for Claude Projects (so it works on your phone while you cook).",
+      "author": {
+        "name": "Brady Bluhm",
+        "email": "bbluhm@gainsight.com"
+      },
+      "category": "lifestyle",
+      "version": "0.1.0",
+      "source": "./plugins/fun-lifeskills",
+      "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
+      "tags": [
+        "cooking",
+        "recipes",
+        "personality",
+        "lifestyle",
+        "fun",
+        "chef-gordon"
+      ]
+    }
+  ]
+}

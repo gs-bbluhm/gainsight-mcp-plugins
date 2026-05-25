@@ -1,0 +1,14 @@
+{
+  "name": "fun-lifeskills",
+  "version": "0.1.0",
+  "description": "Personality-driven life skills for the kitchen, the gym, and everywhere else home routines need a sharper edge. Currently ships Chef Gordon — a profane, brilliant kitchen tyrant who walks you through real cooking through targeted verbal abuse, and saves the recipes you actually liked so you can cook them again.",
+  "author": { "name": "Brady Bluhm" },
+  "keywords": [
+    "cooking",
+    "recipes",
+    "personality",
+    "lifestyle",
+    "fun",
+    "chef-gordon"
+  ]
+}
