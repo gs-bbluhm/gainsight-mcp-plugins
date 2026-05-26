@@ -12,15 +12,21 @@
 
 ### Cowork rendering (app-feel)
 
-- [ ] **Header card up top** with 4-6 metrics. 30-second readable. NEVER lead with prose.
-- [ ] **Tabs (or equivalent visual grouping) for multi-section outputs.** 3-5 tabs max. No 7-section walls.
-- [ ] **Sortable ranked tables** for prioritized lists. Badges for flag decoration (red/yellow/green/blue).
-- [ ] **Action tee-up = ONE at a time.** When user picks an action, produce that ONE deliverable as a card. Don't dump 6 proposed actions in a bullet list.
-- [ ] **Approval gates = visual confirm cards** with approve/edit/skip buttons. NEVER "type approve to continue."
-- [ ] **Preference questions = inline choice cards** (radio buttons / chips). NEVER prose questions buried in markdown.
-- [ ] **Working mode picker** at the top of any multi-action flow: "walk me through one at a time / show me all / focused only."
+- [ ] **Colored app header** up top (branded color, persona/scope/date). The "you're in an app, not a chat" cue. See §1.
+- [ ] **Header card with metrics grid** (3+3 or 2+2+2 — never 4+2 with empty space). Color-stripe each card by signal type. See §2.
+- [ ] **Tab navigation with counts in labels** (`Priorities (8)`, `Active Work (3)`, `Watch (7)`). See §3.
+- [ ] **Sortable ranked tables** with chevrons on sortable columns. Signal pill color matches the row's signal-dot color. See §7.
+- [ ] **Action tee-up = ONE at a time.** When user picks an action, produce that ONE deliverable as a card. Don't dump 6 proposed actions in a bullet list. See §4.
+- [ ] **Approval gates = visual confirm cards** with approve/edit/skip buttons. NEVER "type approve to continue." See §8.
+- [ ] **Preference questions = inline choice cards** (radio buttons / chips). NEVER prose questions buried in markdown. See §5.
+- [ ] **Working mode picker collapses to single line after selection.** Don't keep the 3-card picker visible all session. See §6.
+- [ ] **Action affordance everywhere** — every observation that could lead to action gets an inline button. Cleanup recommendations, past-renewal accounts, briefing observations. See §12 anti-patterns.
+- [ ] **Sticky pending-action footer** as actions accumulate through the session. See §9.
 - [ ] **Per-card content stays short.** If a card needs >150 words, split it or move detail to an expandable section.
-- [ ] **Color/badge semantics:** red = risk · yellow = watch · green = healthy · blue = expansion-signal · gray = inactive/closed.
+- [ ] **Color/badge semantics:** red = risk · yellow = watch · green = healthy · blue = expansion-signal · gray = inactive/closed. Applied to ALL visual elements with signal value (card stripes, pill backgrounds, badge accents). See §10.
+- [ ] **No prose escape hatches.** If you're tempted to write a paragraph explaining what the user should do, convert to a tooltip, help icon, or inline button. See §12 anti-patterns.
+
+**For concrete HTML markup of each component**, see the companion doc: `_shared/cowork-component-library.md` (copy-paste-ready templates).
 
 ### Code rendering (CLI-friendly markdown)
 
@@ -39,9 +45,47 @@ The agent doesn't have a reliable "what surface am I in" signal yet. Default heu
 
 ---
 
-## 1. Header card pattern (universal — every skill)
+## 1. Colored app header (universal — sets the "this is an app" cue)
 
-**Purpose:** 30-second read that orients the user. Always first.
+**Purpose:** Identity strip at the top of every multi-tab skill output. The single biggest "looks like an app vs looks like a chat dump" signal.
+
+**Anatomy:**
+- Branded color strip (Gainsight orange `#FF7A00` / Staircase navy `#1A2C5C` / neutral plugin teal `#0F8E8E` — one canonical brand color per plugin)
+- Icon (📊 / 📞 / 🎯 / 🔄 — semantic to the skill)
+- Skill name · persona · scope · date (compact, single line)
+- Optional right-side affordances: refresh, help (`⟳` / `?`)
+
+**Cowork rendering:**
+
+```html
+<div class="app-header app-header--brand">
+  <span class="app-header__icon">📊</span>
+  <span class="app-header__title">Book Pulse</span>
+  <span class="app-header__sep">·</span>
+  <span class="app-header__persona">Hannah Lee</span>
+  <span class="app-header__sep">·</span>
+  <span class="app-header__date">Week of May 26, 2026</span>
+  <div class="app-header__actions">
+    <button title="Refresh">⟳</button>
+    <button title="Help">?</button>
+  </div>
+</div>
+```
+
+Concrete markup in `cowork-component-library.md` §1.
+
+**Rules:**
+- Always-on at the top of every multi-tab skill. Tabs sit below the header.
+- Skill icon is the visual anchor — picked per skill (see component library mapping).
+- Brand color is consistent within a plugin (don't change between skills).
+- Persona + scope + date renders inline; no line breaks.
+- For Code rendering: replace with a markdown H1 (`# 📊 Book Pulse — Hannah Lee · Week of May 26, 2026`).
+
+---
+
+## 2. Header card pattern (universal — every skill)
+
+**Purpose:** 30-second read that orients the user. Sits directly under the colored app header.
 
 **Cowork rendering:**
 ```
@@ -70,7 +114,7 @@ The agent doesn't have a reliable "what surface am I in" signal yet. Default heu
 
 ---
 
-## 2. Tab structure pattern (multi-section outputs)
+## 3. Tab structure pattern (multi-section outputs)
 
 **When to use:** Any skill output with 3+ distinct sections (book pulse, account workspace, exec radar, etc.).
 
@@ -95,7 +139,7 @@ Each tab becomes a `## Section header`. Use `---` between sections so the struct
 
 ---
 
-## 3. Action tee-up sequence (the key behavioral pattern)
+## 4. Action tee-up sequence (the key behavioral pattern)
 
 **The wall-of-actions failure mode:** dumping 6 proposed actions in a markdown table where each cell has 2-3 lines. The user has to scan, choose, then ask Claude to draft a specific one. That's TWO interaction steps where ONE would do.
 
@@ -133,7 +177,7 @@ Code users handle batch better in markdown — they're already in CLI mindset.
 
 ---
 
-## 4. Preference question card pattern
+## 5. Preference question card pattern
 
 **When to use:** Any time Claude needs the user to pick between substantively different approaches (e.g., save-with-incentive vs offboarding-first, expansion-leaning vs renewal-leaning lens, multi-thread now vs wait for champion stability).
 
@@ -177,7 +221,7 @@ Reply with 1, 2, or 3.
 
 ---
 
-## 5. Working mode picker pattern
+## 6. Working mode picker pattern
 
 **When to use:** At the start of any multi-action workflow (book pulse, account workspace, renewal planner).
 
@@ -189,7 +233,7 @@ Reply with 1, 2, or 3.
 
 ---
 
-## 6. Sortable ranked table pattern
+## 7. Sortable ranked table pattern
 
 **The structure:**
 
@@ -212,9 +256,33 @@ Reply with 1, 2, or 3.
 - ARR formatted compact ($45K not $45,000).
 - Renewal as days-from-today (46d, -72d for past, 2d for imminent).
 
+### Sortable column affordances
+
+- **Chevron icons on sortable columns** (▲ ▼) — hover state shows the available sort direction. Active sort column shows the chevron filled.
+- **Default sort:** by priority/composite score descending — never alphabetical, never insertion order.
+- **Sort persistence:** keep the user's sort choice across tab switches within the same session.
+
+### Signal pill color tie-back
+
+The Signal column's pill background color MUST match the row's signal-dot color. Disconnect breaks the visual chain:
+- 🔴 dot + "Active exit" pill → red-tinted pill background
+- 🟡 dot + "EBR window" pill → amber-tinted pill background
+- 🔵 dot + "Expansion play" pill → blue-tinted pill background
+- 🟢 dot + healthy state → green-tinted pill background
+
+Without tie-back, the user has to look up which color means what twice (once in the dot, once in the pill). With tie-back, the meaning is reinforced at every glance.
+
+### Inline row expansion (preferred) vs bottom drill-down
+
+**Preferred Cowork pattern (if supported):** clicking a row expands the drill-down INLINE below that row, pushing subsequent rows down. Visual continuity preserved.
+
+**Fallback pattern (if inline expand not supported):** pinned right panel or bottom drill-down card. Pinned-right is preferred over bottom (less scrolling for the user). Bottom-pinned is acceptable but should be sticky (stays in viewport when user scrolls table).
+
+**Anti-pattern:** drill-down at the actual bottom of the page (no sticky), forcing user to scroll past the table to see it.
+
 ---
 
-## 7. Approval card pattern (per-write gate)
+## 8. Approval card pattern (per-write gate)
 
 **Every Gainsight write triggers an approval card.** Never write silently.
 
@@ -254,7 +322,37 @@ This pattern is mandatory per `gainsight-output-best-practices.md` — the valid
 
 ---
 
-## 8. Color / badge semantics (universal)
+## 9. Sticky pending-action footer
+
+**Purpose:** As the user approves moves through a session, accumulate the pending Gainsight writes in a sticky bottom bar so they have a constant sense of what's queued. Final "Approve all" review happens before any writes hit the API.
+
+**Cowork rendering:**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  3 actions queued · 1 CTA · 1 outreach draft · 1 SP update       │
+│                                          [ Review all (3) ]      │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Concrete markup in `cowork-component-library.md` §10.
+
+**Behavior:**
+- Starts hidden. First action approval makes it appear.
+- Updates count + breakdown live as user approves/skips moves.
+- Sticky to viewport bottom — stays visible across tab switches.
+- "Review all" button opens the consolidated pre-write validation card (per §8 approval card pattern). User has one final approve-all/cancel gate before any actual API call.
+- Clears after the consolidated approval fires (write executes, log records, footer empties + re-hides).
+
+**Why this matters:** in conversational mode (one action at a time), the user can lose track of how many moves they've queued. The sticky footer fixes that. In batch mode, the footer is redundant (the approval card already shows the queue) — hide it.
+
+**Code rendering:**
+
+No sticky UI in CLI. Replace with a periodic summary line: `Pending writes queued: 3 (1 CTA · 1 outreach · 1 SP update). Reply 'review' to see all before posting.`
+
+---
+
+## 10. Color / badge semantics (universal)
 
 Consistent across all skills:
 
@@ -273,25 +371,25 @@ Consistent across all skills:
 
 ---
 
-## 9. Per-skill mapping
+## 11. Per-skill mapping
 
-| Skill | Header card | Tabs | Action pattern | Preference questions | Mode picker |
-|---|---|---|---|---|---|
-| `gainsight-csm-book-pulse` | Book stats | 4: Overview / Priorities / Active Work / Watch | One-at-a-time + batch toggle | Per-account approach choice | Top of Priorities tab |
-| `gainsight-account-workspace` | Account stats | 4: State / Recommended Actions / Existing Work / Briefing | One-at-a-time | Per-action approach choice | N/A (single account) |
-| `gainsight-meeting-processor` | Call recap stats | 5: Email / Timeline / CTA / Tasks / Wins | Sequential approval per artifact | Per-artifact "approve/edit/skip" | N/A (review packet flow) |
-| `gainsight-exec-renewal-radar` | Portfolio stats | 4: Per-Tier (Ent/MM/SMB) + Themes | Briefing-grade; optional handoff CTAs | "Drill into a tier?" choice | N/A (briefing) |
-| `gainsight-renewal-priority-planner` | Renewal flight stats | 3: Priorities / Per-Account Plans / Open Items | One-at-a-time per account | Save vs save-then-expand vs skeptical | Top of Priorities |
-| `gainsight-stakeholder-connect` | Stakeholder map stats | 3: Map / Outreach Drafts / Notes | Per-stakeholder outreach card | Tone choice (warm/firm/exploratory) | N/A |
-| `gainsight-no-qbr-ebr-scheduler` | EBR pipeline stats | 2: Accounts Needing EBR / Scheduled | Per-account scheduling card | EBR scope choice | N/A |
-| `gainsight-account-handoff-onboarding` | Onboarding stats | 5: Discovery / Validation / 90-Day Plan / Risks / Open Items | Sequential SP build | Validation question per section | N/A (sequential) |
-| `gainsight-exec-pattern-hunter` | Portfolio stats | 3: Themes / Evidence / Recommendations | Briefing-grade | "Drill into theme?" choice | N/A (briefing) |
-| `gainsight-exec-churn-retrospective` | Churn cohort stats | 4: Cohort / Patterns / Gaps / Recommendations | Briefing-grade | "Drill into pattern?" choice | N/A (briefing) |
-| `gainsight-mcp-setup` | (skip header) | 1: Linear onboarding flow | Sequential setup | Role + filter field + practice round | N/A |
+| Skill | Colored header icon | Header card | Tabs | Action pattern | Preference questions | Mode picker |
+|---|---|---|---|---|---|---|
+| `gainsight-csm-book-pulse` | 📊 | Book stats | 4: Overview / Priorities / Active Work / Watch | One-at-a-time + batch toggle | Per-account approach choice | Top of Priorities tab |
+| `gainsight-account-workspace` | 🧭 | Account stats | 4: State / Recommended Actions / Existing Work / Briefing | One-at-a-time | Per-action approach choice | N/A (single account) |
+| `gainsight-meeting-processor` | 📞 | Call recap stats | 5: Email / Timeline / CTA / Tasks / Wins | Sequential approval per artifact | Per-artifact "approve/edit/skip" | N/A (review packet flow) |
+| `gainsight-exec-renewal-radar` | 🎯 | Portfolio stats | 4: Per-Tier (Ent/MM/SMB) + Themes | Briefing-grade; optional handoff CTAs | "Drill into a tier?" choice | N/A (briefing) |
+| `gainsight-renewal-priority-planner` | 🗓 | Renewal flight stats | 3: Priorities / Per-Account Plans / Open Items | One-at-a-time per account | Save vs save-then-expand vs skeptical | Top of Priorities |
+| `gainsight-stakeholder-connect` | 🤝 | Stakeholder map stats | 3: Map / Outreach Drafts / Notes | Per-stakeholder outreach card | Tone choice (warm/firm/exploratory) | N/A |
+| `gainsight-no-qbr-ebr-scheduler` | 📆 | EBR pipeline stats | 2: Accounts Needing EBR / Scheduled | Per-account scheduling card | EBR scope choice | N/A |
+| `gainsight-account-handoff-onboarding` | 🚀 | Onboarding stats | 5: Discovery / Validation / 90-Day Plan / Risks / Open Items | Sequential SP build | Validation question per section | N/A (sequential) |
+| `gainsight-exec-pattern-hunter` | 🔍 | Portfolio stats | 3: Themes / Evidence / Recommendations | Briefing-grade | "Drill into theme?" choice | N/A (briefing) |
+| `gainsight-exec-churn-retrospective` | 🔁 | Churn cohort stats | 4: Cohort / Patterns / Gaps / Recommendations | Briefing-grade | "Drill into pattern?" choice | N/A (briefing) |
+| `gainsight-mcp-setup` | (skip header — linear flow) | (skip header) | 1: Linear onboarding flow | Sequential setup | Role + filter field + practice round | N/A |
 
 ---
 
-## 10. Anti-patterns (the failure modes)
+## 12. Anti-patterns (the failure modes)
 
 | Anti-pattern | Why it fails | Use instead |
 |---|---|---|
@@ -304,10 +402,16 @@ Consistent across all skills:
 | **Generic CTA on header card** ("Continue" / "Next") | Doesn't tell user what's next | Specific primary action ("Show top priorities" / "Drill into Navy Bayview") |
 | **Using emoji badges in Cowork when real badges are available** | Looks like CLI output in a visual surface | Use Cowork's badge primitives if available; emoji as Code fallback only |
 | **Asking "want me to do X?" prose questions** | Forces user to type back yes/no | Just do X with an approval gate, OR offer the choice as a card |
+| **Prose escape hatches** (paragraph explanations where a tooltip / inline help / button would do) | Reads as "the system gave up on rendering this properly" — breaks app-feel | Convert to: tooltip on hover, ? icon, muted footer note, or expandable section. If the explanation is needed, it's not finished rendering. |
+| **Count-vs-list mismatch** ("5 accounts past renewal" header above a list of 7) | Erodes trust — user wonders what else is misreported | Sub-group with sub-headings: "5 past renewal · 2 borderline (Cooper Osprey, Yang Clinics) — different timing pattern" |
+| **Observation without action affordance** (cleanup recommendations, briefing notes, past-renewal accounts as plain text) | The most actionable items become the least clickable items | Every signal that could lead to action gets an inline button. Even briefing notes deserve `[ Investigate ]` |
+| **Action button on a done-state item** (e.g., "Light-touch follow" on a 100%-complete closed SP) | Implies action needed when reality is "you're done" | Replace with check-mark badge + muted text ("✓ Done — confirm renewal proceeds") |
+| **Working mode picker visible after selection** | Eats viewport real estate; user already chose | Compress to single-line chip: `Mode: One at a time · [change]` |
+| **Uneven metric card grid** (4+2 with empty space on right) | Breaks visual rhythm; cards become "less important than the others" without intent | Use 3+3 or 2+2+2 grids. Or fill the empty cell with a sparkline / mini-chart / brand mark. |
 
 ---
 
-## 11. Cross-references
+## 13. Cross-references
 
 - **Output content discipline:** `_shared/gainsight-output-best-practices.md` — what to write (CTA structure, Task content, Timeline format)
 - **MCP query composition:** `staircase-mcp-expert/references/query-patterns.md` — how to query Staircase
@@ -317,7 +421,7 @@ This doc (`cowork-output-patterns.md`) covers HOW to render. The output best-pra
 
 ---
 
-## 12. Versioning + iteration
+## 14. Versioning + iteration
 
 **v1.0 — 2026-05-26.** Initial codification from Layer 2 Cowork testing of Demo 1 (CSM Book Pulse on Hannah Lee). The wall-of-text failure mode triggered this doc.
 

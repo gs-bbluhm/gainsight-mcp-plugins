@@ -37,7 +37,8 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md`
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+- `../../_shared/cowork-output-patterns.md` — patterns + when-to-use
+- `../../_shared/cowork-component-library.md` — concrete HTML markup for each visual component
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -287,22 +288,97 @@ Detect the surface FIRST. If Cowork → app-feel (tabs + cards + buttons). If Co
 
 ### Cowork rendering (primary optimization target)
 
-**4-tab structure. Lead with the header card; never with prose.**
+**Layout: colored app header + tab nav with counts + per-tab content. NEVER lead with prose.**
 
-#### Tab 1 · At a Glance (header card)
+#### Colored app header (always-on, top of viewport)
+
+Render the colored app header component (`cowork-component-library.md` §1) with:
+- **Icon:** 📊
+- **Title:** "Book Pulse"
+- **Persona:** the CSM's name
+- **Date:** "Week of <date>"
+- **Brand:** `gainsight` (Gainsight orange `#FF7A00`)
+
+#### Tab navigation with counts
+
+Render the tab nav component (`cowork-component-library.md` §4):
 
 ```
-┌─ <CSM Name>'s Book — Week of <date>
-│
-│   <N> accounts · $<X.XK> total ARR · <N> SMB / <N> MM / <N> Ent
-│   <N> renewals in next 60 days · <N> past-renewal · <N> EBRs due
-│   <N> CTAs open (yours) · <N> active SPs · <N> expansion-ready
-│   <N> flagged: 🔴 risk · 🟡 watch · 🔵 expansion · 🟢 healthy
-│
-└─ [ Show priorities ] [ Show active work ] [ Show watch list ]
+At a glance · Priorities (N) · Active work (N) · Watch / briefing (N)
 ```
 
-Rules: 4-6 metric lines max. Specifics, not abstractions. Primary CTA in the footer jumps to Tab 2.
+- "At a glance" gets no count (it's the overview tab).
+- Tab counts reflect populated items per tab.
+
+#### Tab 1 · At a Glance
+
+**Render in this order:**
+
+1. **Metric card grid (3+3, signal-color-striped)** — component library §2:
+
+   | Position | Card | Stripe |
+   |---|---|---|
+   | 1 | Book size · N accts · `<tier mix>` | neutral |
+   | 2 | Total ARR · `$<X>K` · avg `$<Y>K` | neutral |
+   | 3 | High-risk signals · N · Risk 4-5 in Staircase | `--risk` |
+   | 4 | Overdue CTAs · N · `<tasks>` | `--risk` if >0, else neutral |
+   | 5 | EBRs in window · N · renewal 60-120d | `--watch` |
+   | 6 | Expansion-ready · N · ER 3+ in Staircase | `--expansion` |
+
+2. **Section callout** (component library §3) for any urgent observation. Example: amber `--warning` callout for "5 accounts past renewal — needs reconciliation today" with action button "Draft deal desk ask."
+
+3. **Primary CTA button** at the bottom: "Take me to top priorities →" (jumps to Tab 2).
+
+**Do NOT include guidance prose** ("Tap Navy Bayview Supply in Priorities to start...") on this tab. If guidance is needed, put it behind a `?` help icon on the primary CTA. Cowork's job is to surface the data; the user discovers the flow by clicking.
+
+#### Tab 2 · Priorities (the working surface)
+
+**Render in this order:**
+
+1. **Working mode picker** (component library §7) — full state on first visit, collapses to single line after selection.
+
+2. **Ranked table** (component library §5) — top 8-10 rows, sortable with chevrons, signal-pill color tied to row signal-dot.
+   - Default sort: priority/composite score descending.
+   - Signal column required — every row needs a signal label (`Active exit` / `EBR window` / `CTA false-pos` / `Past renewal` / `Expansion play` / `Risk + low ER` / `Health floor` etc.).
+   - Watch list 11-25 collapsed behind `[Show watch list (9-15)]` button.
+
+3. **Drill-down card** (component library §6) — opens on row click. Shows State (3 concrete bullets) + Stakeholders (chips, 2-4) + Next Moves (2-4 buttons, first is `--primary`).
+   - Drill-down placement: inline below the clicked row if Cowork supports it; otherwise pinned-right or sticky-bottom.
+   - ALWAYS show Next Moves buttons — never empty.
+
+#### Tab 3 · Active Work
+
+**Render in this order:**
+
+1. **Top-of-tab counts strip:** `Open CTAs · N` `Active SPs · N` `Closed SPs (recent) · N` `Cleanup actions · N`
+
+2. **Section: Open CTAs** — list with per-row context callout (`--warning` if false-positive flagged, `--info` if status update needed). Each row has an action button: `[ Review ]` or specific action like `[ Close as false-positive ]`.
+
+3. **Section: Success Plans** — list with progress + status. **Use done-state badge** (component library §11) for 100%-complete plans (NOT an action button — implies action when none needed). For active SPs, primary action button.
+
+4. **Section: Cleanup recommendations** — bulleted list, BUT each bullet has an inline action button matching the recommended action: `[ Close as false-positive ]` / `[ Open new CTA ]` / `[ Open Success Plan ]`. Don't render cleanup bullets without buttons.
+
+#### Tab 4 · Watch / Briefing
+
+**Rename from "Watch / briefing" to just "Briefing" or "Worth flagging"** if it fits the tab nav width.
+
+**Render in this order:**
+
+1. **Section: Past-renewal accounts** — list grouped by timing.
+   - Headline: "N past renewal + M borderline (timing pattern: ER ≥ 3)"
+   - Each row has inline `[ Check status ]` button.
+   - Use sub-grouping if count mismatch would otherwise occur ("5 past renewal · 2 borderline cases").
+
+2. **Section: Briefing notes (severity-iconed)** — bullets with severity icons matching content:
+   - ⚠ for concerning observations ("Zero Staircase insight flags fired — could mean stale flags")
+   - ℹ for neutral structural notes ("All accounts SMB tier — no Enterprise stratification")
+   - Each note worth investigating gets a `[ Investigate ]` button inline.
+
+3. **Final section: What's NOT here** — only if relevant (no feature requests, no flagged insights, etc.). Each item gets a contextual action (`[ Widen lookback to 180d ]` etc.).
+
+#### Sticky pending-action footer (when actions accumulate)
+
+Render the pending-action footer component (`cowork-component-library.md` §10) once the user has approved their first move. Updates live as actions queue up. "Review all" button opens the consolidated pre-write validation card before any Gainsight write fires.
 
 #### Tab 2 · Priorities (the working surface)
 
