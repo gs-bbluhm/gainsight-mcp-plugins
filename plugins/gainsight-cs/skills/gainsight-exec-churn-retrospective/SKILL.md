@@ -37,6 +37,9 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+**Rendering discipline (for Cowork app-feel):**
+- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
 Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
@@ -175,6 +178,10 @@ Surface them explicitly in the report. **This is the gap-finding mechanism the r
 ---
 
 ## Step 5: Produce the retrospective
+
+**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (4 tabs: Cohort / Patterns / Gaps / Recommendations). Lead with the header card (churn cohort stats), never with prose. Per-account/theme expandable cards; briefing-grade output, minimal direct posting. Inline choice card for "Drill into pattern?". NEVER dump a markdown wall.
+
+**Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 
 ### Output structure
 

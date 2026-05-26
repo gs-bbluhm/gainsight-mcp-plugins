@@ -37,6 +37,9 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+**Rendering discipline (for Cowork app-feel):**
+- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
 Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
@@ -191,6 +194,10 @@ Closing line:
 ---
 
 ## Step 3: Present the packet
+
+**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (3 tabs: Map / Outreach Drafts / Notes). Lead with the header card (stakeholder map stats), never with prose. Use sortable tables + per-stakeholder outreach card (one at a time, approve/edit/skip buttons). Inline choice cards for tone selection (warm/firm/exploratory). NEVER dump a markdown wall.
+
+**Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 
 ### Account-scoped output
 

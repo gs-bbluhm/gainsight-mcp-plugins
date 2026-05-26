@@ -36,6 +36,9 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+**Rendering discipline (for Cowork app-feel):**
+- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
 Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
@@ -157,6 +160,10 @@ E. Optional: pull last 3-5 customer-meeting recaps from your notes destination f
 ---
 
 ## Step 4: Build the onboarding plan
+
+**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (5 tabs: Discovery / Validation / 90-Day Plan / Risks / Open Items). Lead with the header card (onboarding stats), never with prose. Use sortable tables + sequential SP build (one section at a time, approve/edit/skip buttons). Inline choice cards for validation question per section. NEVER dump a markdown wall.
+
+**Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 
 Structure the output as an artifact + inline summary card. The artifact is the deliverable the new CSM uses on day one.
 

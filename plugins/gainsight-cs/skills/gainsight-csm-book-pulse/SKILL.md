@@ -36,6 +36,9 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+**Rendering discipline (for Cowork app-feel):**
+- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
 Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
@@ -278,62 +281,139 @@ Parallel batches of 5 (each batch = 2 analyze_account calls per account).
 
 ## Step 5: Produce the pulse
 
-### Output structure
+**Canonical rendering reference:** `_shared/cowork-output-patterns.md` — top-of-doc Rendering Checklist. Read before producing output.
 
-```markdown
-# CSM Book Pulse — <CSM name> · Week of <date>
+Detect the surface FIRST. If Cowork → app-feel (tabs + cards + buttons). If Code → scannable markdown. Mode heuristics in the canonical doc.
 
-## At a glance
-- <count> accounts in book · $<total ARR> total
-- <count> with renewal in next 90 days
-- <count> health below 40
-- <count> with engagement stale 14+ days
-- <count> with insight flags (No QBR / Dark / Personnel Changes)
+### Cowork rendering (primary optimization target)
 
----
+**4-tab structure. Lead with the header card; never with prose.**
 
-## Where to spend time this week (ranked)
+#### Tab 1 · At a Glance (header card)
 
-| # | Account | Priority | Last engaged | Health | ARR | Renewal | Flags | Why |
-|---|---------|----------|--------------|--------|-----|---------|-------|-----|
-| 1 | <account> | 0.92 | 2d ago | 10 | $149K | 80d | No QBR | Renewal+health critical, QBR overdue |
-| 2 | <account> | 0.88 | 6d ago | 0 | $105K | 250d | Dark | Health 0 + Account Dark |
-| 3 | <account> | 0.83 | 1d ago | 10 | $141K | 224d | — | Health 10 — needs save plan |
-| ... | | | | | | | | |
-
----
-
-## Top 3-5 plays (per-account drill-down)
-
-### 1. <Account> — Priority <score>
-
-**The play (this week):** <one-sentence action from analyze_account>
-**Engage:** <named stakeholder>
-**Approach:** <recommended approach>
-**Evidence:** <ID list>
-
-### 2. <Account> ...
-
-### 3. <Account> ...
-
----
-
-## Watch list (next priority tier)
-Brief list of accounts ranked 6-15 with one-line context each.
-
----
-
-## Hidden in your book
-Accounts the CSM might not be tracking actively but where insight flags or staleness suggest action:
-- Account Dark accounts in book
-- Accounts with personnel changes (champion loss alerts)
-- Accounts not engaged in 21+ days regardless of health
+```
+┌─ <CSM Name>'s Book — Week of <date>
+│
+│   <N> accounts · $<X.XK> total ARR · <N> SMB / <N> MM / <N> Ent
+│   <N> renewals in next 60 days · <N> past-renewal · <N> EBRs due
+│   <N> CTAs open (yours) · <N> active SPs · <N> expansion-ready
+│   <N> flagged: 🔴 risk · 🟡 watch · 🔵 expansion · 🟢 healthy
+│
+└─ [ Show priorities ] [ Show active work ] [ Show watch list ]
 ```
 
-### Format adaptation
+Rules: 4-6 metric lines max. Specifics, not abstractions. Primary CTA in the footer jumps to Tab 2.
 
-- **Cowork:** lead with the ranked card; insight flags as colored badges; expandable per-account drill-downs.
-- **Code:** full markdown to stdout.
+#### Tab 2 · Priorities (the working surface)
+
+**Top of tab — working mode picker (inline choice card):**
+
+```
+How do you want to work through these?
+  ⚪ Walk me through one at a time  (default, conversational)
+  ⚪ Show me all proposed actions   (batch mode)
+  ⚪ Just must-do this week         (focused, skip watch list)
+```
+
+**Ranked sortable table (top 8-10 rows):**
+
+| # | Account | ARR | Renewal | Risk | Health | Flags | Why here |
+|---|---|---|---|---|---|---|---|
+
+- Sortable by any column header
+- Badge decoration in Flags column (🔴 🟡 🟢 🔵 per `cowork-output-patterns.md` §8)
+- Row click expands to drill-down card
+- "Why here" column is mandatory — short specific phrase per row
+
+**Per-row drill-down card (opens on row tap):**
+
+```
+┌─ <Account> · ARR $<X>K · Renewal <Nd> · Risk <N> · Health <N>
+│
+│   <2-3 sentence customer state>
+│
+│   Recommended next moves:
+│     ┌──────────────────────────────────────────┐
+│     │ ▶ Draft outreach to <stakeholder>         │
+│     │ ▶ Update <CTA name> → <new status/scope>  │
+│     │ ▶ Schedule EBR / Reframe EBR / etc.       │
+│     └──────────────────────────────────────────┘
+│
+│   When user picks a move → produces THAT card next (see Action tee-up below)
+│
+└─ [ Skip this account ] [ More context ]
+```
+
+#### Tab 3 · Active Work (existing CTAs + SPs)
+
+Two collapsible sub-sections:
+
+- **Open CTAs in your name** — table with status, due date, age, cleanup recommendation per row (close as false positive, advance, escalate)
+- **Active Success Plans** — table with progress %, due date, action needed per plan
+
+Per-row buttons: `[ Update ] [ Close ] [ Add Task ]` → opens approval card.
+
+#### Tab 4 · Watch / Briefing
+
+- **Past-renewal accounts** — needs status reconciliation. Per-row `[ Check status ]` button → triggers ad-hoc query.
+- **Briefing notes** — observations Claude wants to surface (no flagged insights → ops check, no feature requests → widen lookback, etc.). Plain prose; short.
+
+### Action tee-up sequence (the key behavioral pattern)
+
+**Do NOT dump 6 proposed actions in a markdown table. Do NOT close the response with "Reply with A,C to draft."**
+
+When user picks an action from a drill-down card:
+
+1. Produce ONLY that ONE deliverable as a new card.
+2. Card shows preview (email body, CTA fields, EBR outline, etc.) + approve/edit/skip buttons.
+3. On approve → write executes → confirmation card → return to Tab 2 with the next priority surfaced or the same account if more moves remain.
+4. If user picked "batch mode" in the working-mode picker, fall back to the markdown action queue with checkboxes.
+
+Full spec: `_shared/cowork-output-patterns.md` §3.
+
+### Preference question pattern
+
+When the per-account approach has a meaningful branch (e.g., save-with-incentive vs offboarding-first for a detractor situation), surface an inline choice card. Spec: `_shared/cowork-output-patterns.md` §4.
+
+Examples for this skill:
+- "How should we approach <Account>?" — Save-with-incentive / Offboarding-first / Multi-thread first
+- "What lens for <Account>?" — Renewal-execution / Expansion-prep / Risk-recovery
+
+### Code rendering (CLI fallback)
+
+The legacy markdown structure still works for Code users. Keep it scannable:
+
+```markdown
+# CSM Book Pulse — <CSM Name> · Week of <date>
+
+## At a Glance
+- <N> accounts · $<X>K total ARR
+- <N> renewals in 60d · <N> past-renewal · <N> EBRs due
+- <N> open CTAs · <N> active SPs · <N> expansion-ready
+
+## Priorities (ranked top 10)
+| # | Account | ARR | Renewal | Risk | Health | 🚩 | Why here |
+|---|---|---|---|---|---|---|---|
+| 1 | ... | $45K | 46d | 5 | 34 | 🔴 | ... |
+
+## Active Work
+- Open CTAs in your name: <list with status + age>
+- Active Success Plans: <list with progress>
+
+## Watch List
+- Past-renewal: <accounts needing reconciliation>
+- Briefing notes: <observations>
+
+## Proposed Actions (batch mode)
+| # | Action | Account | Type | Notes |
+| A | Draft outreach to <stakeholder> | <Account> | Gmail draft | <one-line context> |
+| B | Update CTA <name> → <status> | <Account> | UPDATE | <one-line context> |
+| C | Reframe EBR as exit management | <Account> | Notes doc | <one-line context> |
+
+Reply `approve A,C` (selective) or `approve all`, or `walk me through these` for sequential mode.
+```
+
+Also write the full packet to `inbox/workshop/csm-book-pulse-<csm>-<date>.md` so the user can grab it from disk.
 
 ---
 
