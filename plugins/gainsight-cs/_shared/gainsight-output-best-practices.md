@@ -5,6 +5,52 @@
 
 ---
 
+## ⚡ READ THIS FIRST — Execution checklist (run before every Gainsight write)
+
+**These 10 rules account for 95% of plugin output quality. If you can't tick all 10 before a write, stop and rebuild.**
+
+### Composition rules (apply while drafting)
+
+- [ ] **CTA description = TLDR ONLY.** 1-3 sentences: what + why + pointer to Tasks. NEVER the action playbook. See §2A.
+- [ ] **Tasks carry the actions.** Each CTA has ≥2 Tasks. Each Task = ONE discrete action with a clear stakeholder. See §2B + §3.
+- [ ] **Task descriptions carry the accelerator.** Pre-drafted email body, agenda, discovery script, escalation template — not "draft an email." See §3A-C.
+- [ ] **Timeline activity for context.** For any strategic motion, post a Timeline Update with TLDR / Findings / Stakeholders / Action sequence / Evidence, attached to the SP or CTA. See §4.
+- [ ] **HTML, not Markdown.** Rich-text fields require `<p>`, `<ul>`, `<strong>`, `<br>`. Never `**bold**` or `- item`. See §1.
+- [ ] **No em dashes. No AI-isms. No internal classification labels** in customer-facing fields. See §1 anti-patterns.
+
+### Discipline rules (apply at the approval gate, before any tool call)
+
+- [ ] **Fetch existing first.** `fetch_cta_list` + `fetch_success_plan_list` on the company. Surface stagnant artifacts. See §12.
+- [ ] **Reuse-vs-create check.** If an open CTA covers the same signal → update, don't duplicate. See §8.
+- [ ] **SP threshold honored.** Don't create a Success Plan unless ≥3 strategic CTAs + clear outcome goal + measurable success criteria. See §5B.
+- [ ] **Approval gate with validation summary.** Surface the pre-write summary (below) to the user BEFORE any write call. Wait for explicit approval.
+
+### Pre-write validation summary (paste-ready template)
+
+Before any `create_sp` / `create_cta` / `create_cta_task` / `create_timeline_activity` call, surface this to the user:
+
+```
+Pre-write validation — <Account>
+
+Artifacts about to land:
+- [count] Success Plan(s) with Plan Info enriched (Target Completion Date, Priority, Success Definition)
+- [count] CTAs · descriptions confirmed TLDR · [count] attached to SP
+- [count] Tasks total · each carries accelerator content (drafts/agendas/scripts)
+- [count] Timeline activity attached to [SP / CTA / company]
+
+Discipline checks:
+- Existing artifacts fetched: [count] stagnant CTAs, [count] active SPs reviewed
+- Reuse-vs-create: [decision per existing artifact]
+- SP threshold: [N CTAs ≥3 ✓ / N <3 — using standalone CTAs instead]
+- Formatting: HTML confirmed, no em dashes, no internal labels in customer-facing fields
+
+Ready to write?  [Approve all / Adjust / Hold]
+```
+
+**If any check fails, regenerate before writing. Never silently violate.**
+
+---
+
 ## TLDR
 
 Gainsight artifacts accelerate CSMs when they (1) lead with TLDR-quality summaries, (2) break actions into Tasks rather than walls of text, (3) use Timeline entries as the universal context-delivery mechanism, and (4) only create Success Plans when there's a real strategic plan with measurable outcomes. Never link to external `.md` files — context lives inline.
@@ -673,6 +719,9 @@ When implementing the patterns above in specific skills:
 | Auto-creating Success Plan from a single signal | Methodology violation per §5 | Use a single CTA instead |
 | Defaulting to Reason: "Other" | Loses workshop-grade specificity | Pick from the org's actual options that matches the underlying signal |
 | Putting draft email in CTA Comments instead of Task description | Comments field is for context; Tasks accelerate work | Email body → Task description |
+| **Putting the action playbook in CTA Comments (description) instead of Tasks** ⚠ NEW | Bloats the description; CSM can't scan the situation in 10 seconds; actions get buried | Comments = TLDR only (situation + why it matters). Each discrete action → ONE Task with the accelerator content in the Task description. See §2A vs §2B. |
+| **Creating a standalone CTA that belongs under an active SP** ⚠ NEW | Splits the strategic motion across surfaces; CSM has to jump between CTA list and SP to see the full picture; reset/cleanup gets harder | If the CTA is part of a strategic motion already covered by an active SP, attach it via `success_plan_id` (create) or `CtaGroupId` (update). Standalone CTAs are for tactical motions outside any plan. |
+| **Creating a SP + CTAs but skipping the Timeline Update** ⚠ NEW | The SP shows tasks but no narrative context — teammate has no situational anchor when they open it | When the SP launches a strategic motion, post a Timeline Update (Type=Update) attached to the SP via `success_plan_id`. Carries TLDR / Findings / Stakeholders / Action sequence / Evidence. See §4. |
 | Forgetting the Status custom field on Timeline activities | Write fails silently or with cryptic error | Always set `custom_field_values={"Status": "..."}` for orgs that require it |
 
 ---

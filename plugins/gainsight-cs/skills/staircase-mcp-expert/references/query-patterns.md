@@ -6,6 +6,44 @@ Organized: **Business-language translation** → **Validated phrasings** → **P
 
 ---
 
+## ⚡ READ THIS FIRST — Execution checklist (run before every non-trivial Staircase query plan)
+
+**These rules account for the difference between rich data and empty results. Scan in 10 seconds before composing.**
+
+### Composition rules
+
+- [ ] **One dimension per `ask` query.** AND/OR composition fails. Decompose first, intersect client-side. See "Validated phrasing patterns" below + `references/anti-patterns.md`.
+- [ ] **Scope explicitly.** "My accounts" / "my book" does NOT auto-scope. Always filter by the org's team-member field (`Csm`, `Owner`, `Account_Executive__gc`, or whatever the org uses — discover via `gainsight-cs-mcp-expert/references/org-discovery.md` or read the user profile written by `gainsight-mcp-setup`).
+- [ ] **No abstract score requests.** Don't ask the MCP to compute "urgency," "composite priority," "save-into-expansion score." Pull raw fields, compute client-side. The 6-tier composite below is Claude-side math.
+- [ ] **15-cap clarity.** The 15 limit is for PARALLEL per-account analysis fan-out. Cross-account LIST queries return 25-100+ accounts routinely. Use long-list-then-prioritize-15 when the question is portfolio-wide.
+- [ ] **Action-verb phrasing for `analyze_account`.** "Summarize / Identify / Draft / List" outperforms "What are the current X" empirically.
+- [ ] **Risk × Expansion are INDEPENDENT.** Neither analyst sees the other. For save-into-expansion candidates, pull both + merge with recency weighting + classify into one of 3 subtypes (Expansion-as-Save / Save-then-Expand / Skeptical Read). NEVER expose classification labels in customer-facing artifacts.
+
+### Decomposition rules
+
+- [ ] **Compound asks → decompose first.** "Accounts that are at-risk AND expanding AND renewing soon" → 3 separate queries, intersect client-side.
+- [ ] **Long-list-then-prioritize-15** is the production cross-account workflow. List → score → drill-down on top 15 via parallel `analyze_account`.
+- [ ] **Determinism: retry empty results up to 2x** with same phrasing before trying alternates. Trust negative `analyze_account` results — "no usable evidence" means it's not hiding.
+
+### Pre-query validation summary (paste-ready, for complex plans)
+
+For any query plan with >2 calls OR compound logic, surface this to the user before firing:
+
+```
+Pre-query validation — <user ask>
+
+Scope: <e.g., Hannah Lee's 31 accounts via Csm filter>
+Dimensions: <one per call — e.g., (1) Risk Level + (2) Expansion Readiness + (3) Renewal <120d>
+Plan: <N single-dim ask calls + client-side intersect + top-N analyze_account>
+Drill-down depth: <0 / per-account analyses on top N>
+
+Estimated MCP load: <N queries / parallel limit / rate-budget>
+```
+
+**Skip for single-criterion lookups. Use whenever the plan has compound logic, fan-out, or expensive deep-dives.**
+
+---
+
 ## Step 1 — Identify the SCOPE
 
 | User says... | Scope is... |

@@ -37,6 +37,45 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
+
+Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
+
+**Composition rules — run mentally per query:**
+
+- [ ] **One dimension per `ask` query.** AND/OR composition fails. Decompose first, intersect client-side.
+- [ ] **Scope explicitly.** "My accounts" doesn't auto-scope. Filter by the org's team-member field (`Csm` / `Owner` / org-bespoke — read from user profile or discover via `gainsight-cs-mcp-expert/references/org-discovery.md`).
+- [ ] **No abstract score requests** to the MCP. Pull raw fields; compute "urgency" / "composite priority" / "save-into-expansion score" client-side.
+- [ ] **15-cap discipline.** The 15 is for PARALLEL per-account analysis fan-out. Cross-account LIST queries return 25-100+ accounts routinely. Use long-list-then-prioritize-15 for portfolio-wide work.
+- [ ] **Action-verb phrasing** for `analyze_account`. "Summarize / Identify / Draft / List" outperforms "What are the current X."
+- [ ] **Risk × Expansion are INDEPENDENT.** Pull both. Merge client-side with recency weighting + stakeholder reconciliation + classification. NEVER expose Save-then-Expand / Skeptical Read / Expansion-as-Save labels in customer-facing fields.
+
+**Pre-query validation summary — surface to user for complex plans (>2 calls or compound logic):**
+
+```
+Pre-query validation — <user ask>
+
+Scope: <e.g., Hannah Lee's 31 accounts via Csm filter>
+Dimensions: <one per call — e.g., (1) Risk Level + (2) Expansion Readiness + (3) Renewal <120d>
+Plan: <N single-dim ask calls + client-side intersect + top-N analyze_account>
+Drill-down depth: <0 / per-account analyses on top N>
+
+Estimated MCP load: <N queries / parallel limit>
+```
+
+Skip for single-criterion lookups. Use for compound logic, fan-out, expensive deep-dives.
+
+**Failure modes from prior sessions to avoid:**
+- Compound queries returning empty (decompose first)
+- "My accounts" without explicit scope filter (use the team-member field)
+- Asking the MCP to compute abstract scores (pull raw, compute client-side)
+- Conflating list size with the 15-cap (long-list-then-prioritize-15)
+- Exposing internal classification labels in customer-facing artifacts (merge labels stay internal)
+
+Full anti-pattern catalog: `staircase-mcp-expert/references/anti-patterns.md`.
+
+---
+
 For the CSM moment: "I haven't touched my stakeholders in a while — who should I reconnect with, and what should I say?" The skill analyzes stakeholder alignment from Staircase signals and drafts personalized outreach per named stakeholder.
 
 The Personnel Changes flag returns accounts with named champion-departure narratives plus supporting evidence IDs. The per-account Risk Analysis stakeholder section returns named stakeholders with sentiment + recommended engagement approach.
@@ -241,22 +280,62 @@ Champion attrition is the silent killer of CSM relationships. When the Personnel
 - `gainsight-meeting-processor/references/email-format.md` — tone + structure
 - `staircase-analyst-data-models.md` — stakeholder section query template
 
-## Output Best Practices (Gainsight writes)
+## ⚡ Pre-write quality gate (mandatory before any Gainsight write)
 
-**Before writing customer-facing content to Gainsight**, follow `plugins/gainsight-cs/_shared/gainsight-output-best-practices.md`. Core rules:
+Canonical reference: `plugins/gainsight-cs/_shared/gainsight-output-best-practices.md` — top-of-doc Execution Checklist. 30-second scan before composing any write.
 
-1. **User approval gate** before customer-facing writes.
-2. **Commitment discipline.** PROPOSAL language. Email Tasks carry "Verify Before Sending."
-3. **HTML formatting** in rich-text. `<p>`, `<ul>`, `<ol>`, `<strong>`, `<br>`.
-4. **Teammate-facing, customer-focused.** No internal classification labels in customer surfaces.
-5. **Evidence as readable references.** `Email (Person, date)` / `Meeting (date)`.
-6. **Reuse-vs-create.** Fetch existing first.
-7. **Cleanup discipline** for stagnant artifacts.
-8. **Org-specific discovery** of CTA Types / SP Types / Timeline custom fields.
+**Composition rules — run mentally per artifact:**
+
+- [ ] **CTA description = TLDR ONLY.** 1-3 sentences: what + why + pointer to Tasks. NOT the action playbook.
+- [ ] **Each CTA has ≥2 Tasks.** Each Task = one discrete action.
+- [ ] **Task descriptions carry the accelerator** — pre-drafted email body, agenda, discovery script, escalation template. Not "draft an email."
+- [ ] **Timeline activity for strategic motions** with TLDR / Findings / Stakeholders / Action sequence / Evidence. Attach via `success_plan_id` or `cta_id` so it lives where the work lives.
+- [ ] **HTML, not Markdown** in rich-text fields (`<p>`, `<ul>`, `<strong>`, `<br>`).
+- [ ] **No em dashes. No AI-isms. No internal classification labels** (Save-then-Expand, Skeptical Read, Engaged Frustration, Recency tiebreaker) in customer-facing fields.
+
+**Discipline rules — run mentally before the approval gate:**
+
+- [ ] **Fetch existing CTAs + SPs first** (`fetch_cta_list` + `fetch_success_plan_list` on the company). Surface stagnant artifacts to the user.
+- [ ] **Reuse-vs-create check.** If an open CTA covers the same signal → update, don't duplicate.
+- [ ] **SP threshold.** Don't create a Success Plan unless ≥3 strategic CTAs + clear outcome goal + measurable success criteria. Otherwise use standalone CTA(s).
+- [ ] **Commitment discipline.** Default to PROPOSAL language ("I'd like to propose…", "Can we align on…"). Email Tasks include a **Verify Before Sending** checklist for every external commitment.
+- [ ] **Org-specific discovery.** Discover CTA Types / Reasons / SP Types / required Timeline custom fields via `prepare_*` calls. Never hardcode picklist labels.
+
+**Pre-write validation summary — paste-ready, surface BEFORE any write tool call:**
+
+```
+Pre-write validation — <Account>
+
+Artifacts about to land:
+- [N] Success Plan(s) with Plan Info enriched
+- [N] CTA(s) · all descriptions TLDR · [N] attached to SP
+- [N] Tasks total · each Task description carries accelerator content
+- [N] Timeline activity attached to [SP / CTA / company]
+
+Discipline checks:
+- Existing artifacts reviewed: [N] stagnant CTAs, [N] active SPs
+- Reuse-vs-create: [decisions per existing artifact]
+- SP threshold: [N CTAs ≥3 ✓ / else using standalone CTAs]
+- Formatting ✓ HTML · ✓ No em dashes · ✓ No internal labels in customer-facing fields
+
+Ready to write?  [Approve all / Adjust / Hold]
+```
+
+**If any rule fails, regenerate before writing. Never silently violate.**
 
 ### Skill-specific emphasis
 
-**Outreach drafts go into Email-type Task descriptions** (with full Verify Before Sending checklist for each external commitment), NOT into CTA Comments. The CTA Comments stay light: TLDR + stakeholder map + Tasks reference. Deeper stakeholder context (named-stakeholder analysis, relationship history, sentiment trajectories) goes into the CTA's linked Timeline activity. Principle: Comments = scannable TLDR. Tasks = action playbook with accelerator content. Timeline = deep team context.
+Timeline activity for stakeholder map + relationship state. Outreach drafts live in Task descriptions (full email body, ready to send after Verify Before Sending), never in CTA Comments. The CTA Comments stay light: TLDR + stakeholder map + Tasks reference. Deeper stakeholder context (named-stakeholder analysis, relationship history, sentiment trajectories) goes into the CTA's linked Timeline activity. Principle: Comments = scannable TLDR. Tasks = action playbook with accelerator content. Timeline = deep team context.
+
+### Failure modes from prior sessions to avoid
+
+- **Action content in CTA description instead of Tasks** → CTA description stays TLDR; actions become Tasks
+- **Standalone CTA that belongs under an active SP** → attach via `success_plan_id` (create) or `CtaGroupId` (update)
+- **Creating SP + CTAs but skipping the Timeline Update context anchor** → always post the Update activity attached to the SP
+- **Hardcoding picklist values** instead of `prepare_cta` / `prepare_sp` discovery
+- **Putting draft email in CTA Comments** instead of Task description
+
+Full anti-pattern catalog: `_shared/gainsight-output-best-practices.md` §10.
 
 ---
 

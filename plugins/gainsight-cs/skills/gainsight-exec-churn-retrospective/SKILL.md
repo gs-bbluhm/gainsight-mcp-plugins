@@ -37,6 +37,45 @@ Read these BEFORE composing operations:
 **Output discipline (for any customer-facing write):**
 - `../../_shared/gainsight-output-best-practices.md`
 
+## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
+
+Canonical reference: `plugins/gainsight-cs/skills/staircase-mcp-expert/references/query-patterns.md` — top-of-doc Execution Checklist. 30-second scan before composing.
+
+**Composition rules — run mentally per query:**
+
+- [ ] **One dimension per `ask` query.** AND/OR composition fails. Decompose first, intersect client-side.
+- [ ] **Scope explicitly.** "My accounts" doesn't auto-scope. Filter by the org's team-member field (`Csm` / `Owner` / org-bespoke — read from user profile or discover via `gainsight-cs-mcp-expert/references/org-discovery.md`).
+- [ ] **No abstract score requests** to the MCP. Pull raw fields; compute "urgency" / "composite priority" / "save-into-expansion score" client-side.
+- [ ] **15-cap discipline.** The 15 is for PARALLEL per-account analysis fan-out. Cross-account LIST queries return 25-100+ accounts routinely. Use long-list-then-prioritize-15 for portfolio-wide work.
+- [ ] **Action-verb phrasing** for `analyze_account`. "Summarize / Identify / Draft / List" outperforms "What are the current X."
+- [ ] **Risk × Expansion are INDEPENDENT.** Pull both. Merge client-side with recency weighting + stakeholder reconciliation + classification. NEVER expose Save-then-Expand / Skeptical Read / Expansion-as-Save labels in customer-facing fields.
+
+**Pre-query validation summary — surface to user for complex plans (>2 calls or compound logic):**
+
+```
+Pre-query validation — <user ask>
+
+Scope: <e.g., Hannah Lee's 31 accounts via Csm filter>
+Dimensions: <one per call — e.g., (1) Risk Level + (2) Expansion Readiness + (3) Renewal <120d>
+Plan: <N single-dim ask calls + client-side intersect + top-N analyze_account>
+Drill-down depth: <0 / per-account analyses on top N>
+
+Estimated MCP load: <N queries / parallel limit>
+```
+
+Skip for single-criterion lookups. Use for compound logic, fan-out, expensive deep-dives.
+
+**Failure modes from prior sessions to avoid:**
+- Compound queries returning empty (decompose first)
+- "My accounts" without explicit scope filter (use the team-member field)
+- Asking the MCP to compute abstract scores (pull raw, compute client-side)
+- Conflating list size with the 15-cap (long-list-then-prioritize-15)
+- Exposing internal classification labels in customer-facing artifacts (merge labels stay internal)
+
+Full anti-pattern catalog: `staircase-mcp-expert/references/anti-patterns.md`.
+
+---
+
 The CSM Ops quarterly ritual: review who churned, why they churned, what we missed, and where Staircase didn't catch the signal.
 
 ---
