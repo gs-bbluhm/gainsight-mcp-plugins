@@ -1,6 +1,6 @@
 ---
 name: gainsight-account-handoff-onboarding
-description: Build a first-90-days onboarding plan for a CSM inheriting an account. Scans Staircase for accounts with a Handoff Analysis, then synthesizes stakeholders, why-they-bought, goals, risks, and a week/30/90 action plan grounded in Gainsight.
+description: First-90-days plan for a CSM inheriting an account — "I just inherited [account]," "I'm taking over [account]," "onboard me on [account]." Synthesizes stakeholders, why-they-bought, goals, risks, and a week/30/90 action plan.
 user_type: ic
 ---
 
@@ -9,11 +9,12 @@ user_type: ic
 ## Discovery
 
 **Auto-trigger phrases:**
+- "I just inherited [account]"
 - "I'm taking over [account]"
-- "build me an onboarding plan for [account]"
-- "new CSM brief for [account]"
-- "scan my accounts with handoff analyses"
-- "which accounts have handoffs"
+- "onboard me on [account]"
+- "first 90 days for [account]"
+- "handoff for [account]"
+- "which of my accounts have handoffs"
 
 **Optimized for:** Cowork (interactive cards + approval gates) and Code (markdown + structured prompts). Cowork is the primary optimization target.
 

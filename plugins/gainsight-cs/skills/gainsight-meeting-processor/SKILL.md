@@ -1,6 +1,6 @@
 ---
 name: gainsight-meeting-processor
-description: Process a customer meeting into a review packet. Includes Gmail recap, Gainsight Timeline, risk CTA, success-plan updates, action items, win quotes. Fans out Staircase + Gainsight context so output reflects 60-day intelligence, not transcript alone.
+description: Post-call workflow for CSMs after a customer sync — "I just had a call with [customer]," "process my [customer] call," "[customer] meeting recap." Turns the meeting into a Gmail recap, Timeline entry, risk CTA, and SP updates.
 user_type: ic
 ---
 
@@ -9,11 +9,12 @@ user_type: ic
 ## Discovery
 
 **Auto-trigger phrases:**
-- "process my call with [customer]"
+- "I just had a call with [customer]"
+- "process my [customer] call"
 - "post-call for [customer]"
-- "run the meeting processor for [customer]"
-- "do the post-call workflow for [customer]"
-- Any post-call request naming an account
+- "[customer] sync recap"
+- "[customer] meeting recap"
+- "recap my [customer] call"
 
 **Why this matters:** Headline workflow that exercises both Staircase AI and Gainsight CS MCPs together. The Staircase fan-out differentiates this from transcript-only post-call tools. Risk and sentiment claims are grounded in 60-90 days of communication data, not just the call.
 

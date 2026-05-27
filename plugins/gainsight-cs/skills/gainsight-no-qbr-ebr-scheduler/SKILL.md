@@ -1,6 +1,6 @@
 ---
 name: gainsight-no-qbr-ebr-scheduler
-description: Surface No-QBR accounts and draft personalized EBR-scheduling outreach anchored on account-specific context (risks, expansion signals, themes). Chains into QBR prep after scheduling.
+description: EBR scheduling for CSMs — "which accounts need an EBR," "schedule my EBRs," "who needs a QBR," "draft EBR invites." Surfaces accounts overdue for a business review and drafts invites grounded in each account's risks and expansion signals.
 user_type: ic
 ---
 
@@ -9,12 +9,12 @@ user_type: ic
 ## Discovery
 
 **Auto-trigger phrases:**
-- "schedule QBRs"
-- "EBR outreach"
-- "which accounts need a QBR"
-- "No QBR pulse"
-- "set up business reviews"
-- "QBR scheduling assistant"
+- "which accounts need an EBR"
+- "schedule my EBRs"
+- "EBR pipeline"
+- "who needs a QBR"
+- "draft EBR invites"
+- "accounts overdue for a business review"
 
 **Optimized for:** Cowork (interactive cards + approval gates) and Code (markdown + structured prompts). Cowork is the primary optimization target.
 

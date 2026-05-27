@@ -1,6 +1,6 @@
 ---
 name: gainsight-renewal-priority-planner
-description: Prioritize upcoming renewals where CSM attention can most move the needle. Composite movability score (Risk + Expansion Readiness + ARR + renewal proximity + tier), then per-account deep-dives surfacing save-plus-expansion plays.
+description: Renewal flight planning for CSMs and CS leaders — "plan my renewals," "which renewals need attention," "where can I move the needle." Ranks upcoming renewals by where effort generates the biggest return, with per-account save-plus-expansion plays.
 user_type: exec
 ---
 
@@ -9,12 +9,12 @@ user_type: exec
 ## Discovery
 
 **Auto-trigger phrases:**
-- "which renewals should I focus on"
-- "prioritize my Q2 renewals"
-- "where should I spend my time before renewal"
-- "renewal priority planner"
-- "top renewal plays this quarter"
-- "move-the-needle accounts"
+- "plan my renewals"
+- "which renewals need attention"
+- "renewal priority"
+- "save plays for my renewals"
+- "where can I move the needle on renewals"
+- "movability across renewals"
 
 **Purpose:** Built for the leadership-perspective question: not "what's at risk" or "what could expand" in isolation, but "where will my effort generate the biggest renewal-cycle return." Combines Staircase Risk Analysis + Expansion Analysis with Gainsight commercials.
 

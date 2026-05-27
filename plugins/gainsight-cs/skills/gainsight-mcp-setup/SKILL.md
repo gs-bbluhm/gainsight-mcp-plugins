@@ -1,6 +1,6 @@
 ---
 name: gainsight-mcp-setup
-description: First-time setup. Asks who you are and what role you play, discovers your Gainsight org's bespoke fields (segmentation, team-member assignment, required custom fields, SP types), writes a persistent user profile, then runs a short role-tailored practice round so you immediately feel the unlock. Run this once per user per org. Other skills read the profile to auto-apply your filter — no more "filter for CSM = me" plumbing on every ask.
+description: First-time setup for the Gainsight CS plugin — "set up the plugin," "first-time setup," "tell the plugin who I am," "configure for my role." Asks who you are, discovers your org's fields, writes a profile so every skill auto-filters.
 user_type: foundation
 allowed-tools: mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__resolve_customer, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__resolve_user, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__get_object_metadata, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__get_picklist_values, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__get_activity_types_config, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__manage_cockpit_actions, mcp__88e9acda-6f39-4db2-a5df-89cfb4e1351d__manage_success_plan_actions, mcp__staircase-ai__ask, mcp__staircase-ai__staircase_account_lookup, mcp__staircase-ai__staircase_analyze_account, Read, Write, Edit
 ---

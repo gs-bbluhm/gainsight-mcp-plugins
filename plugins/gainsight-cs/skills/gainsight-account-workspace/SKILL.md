@@ -1,6 +1,6 @@
 ---
 name: gainsight-account-workspace
-description: Daily working session on a single account. Loads Gainsight (CTAs, success plans, Timeline, ARR, renewal) and Staircase situational context, recommends next moves, drafts updates, posts only on approval. The everyday workbench between meetings.
+description: Single-account workbench for CSMs — "work on [account]," "what should I do for [account]," "drive [account] forward." Pulls everything you need for one account, recommends next moves, drafts updates you approve before anything posts.
 user_type: ic
 ---
 
@@ -11,9 +11,9 @@ user_type: ic
 **Auto-trigger phrases:**
 - "work on [account]"
 - "what should I do for [account]"
-- "open the workspace for [account]"
-- "show me the [account] situation"
-- "move [account] forward"
+- "open [account]" / "pull up [account]"
+- "drive [account] forward"
+- "[account] situation" / "where are we with [account]"
 
 **Validation history:** The "everyday workbench" companion to gainsight-meeting-processor (post-call) and gainsight-account-handoff-onboarding (one-time-for-a-handoff). The highest-frequency working surface in the plugin — touches all three Gainsight write paths (CTAs, Timeline, SP updates).
 

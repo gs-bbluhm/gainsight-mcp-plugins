@@ -1,6 +1,6 @@
 ---
 name: gainsight-exec-pattern-hunter
-description: Cross-portfolio thematic intelligence. Groups 15 accounts by emergent themes — feature requests, friction signals, win narratives, expansion language, competitive mentions — with evidence IDs.
+description: Cross-portfolio patterns for CS leaders — "what are the patterns across our customers," "themes across the book," "what's happening across the portfolio." Surfaces emergent themes (feature asks, friction, wins, competitive mentions) with evidence.
 user_type: exec
 ---
 
@@ -9,11 +9,13 @@ user_type: exec
 ## Discovery
 
 **Auto-trigger phrases:**
-- "what patterns are emerging"
-- "what themes are showing up across my book"
+- "what are the patterns across our customers"
+- "themes across the book"
+- "what's happening across the portfolio"
+- "cross-account trends"
+- "voice of customer patterns"
 - "common feature requests this quarter"
-- "what friction signals repeat"
-- "what wins are being expressed"
+- "what friction is repeating"
 
 **Purpose:** Portfolio-wide thematic view grounded in actual customer language. Staircase MCP cross-account queries support up to ~15 accounts in a single grouped-theme query with evidence IDs.
 

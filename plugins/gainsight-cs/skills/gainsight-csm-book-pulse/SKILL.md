@@ -1,6 +1,6 @@
 ---
 name: gainsight-csm-book-pulse
-description: Focus a CSM on the accounts in their book that need attention THIS week. Pulls full book by the org's team-member field, layers insight flags, ranks by an engagement-staleness-aware composite priority.
+description: Weekly book pulse for CSMs and AEs — "what's on my plate," "show me my book," "where should I focus," "show me my expansion plays." Ranks accounts in your book by what needs attention this week, with an expansion lens for upsell-ready picks.
 user_type: ic
 ---
 
@@ -9,11 +9,13 @@ user_type: ic
 ## Discovery
 
 **Auto-trigger phrases:**
-- "focus my book"
-- "what should I focus on this week"
-- "book pulse for [CSM]"
-- "where does [CSM] need to spend time"
-- "show me [CSM]'s priorities"
+- "what's on my plate this week"
+- "show me my book" / "book pulse"
+- "where do I need to focus" / "my priorities"
+- "what's hot in my book today"
+- "show me my expansion plays"
+- "who in my book is ready to expand"
+- "expansion plays in my book"
 
 **Optimized for:** Cowork (interactive cards + approval gates) and Code (markdown + structured prompts). Cowork is the primary optimization target.
 

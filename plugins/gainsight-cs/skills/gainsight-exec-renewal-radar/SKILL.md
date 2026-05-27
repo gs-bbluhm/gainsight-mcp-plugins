@@ -1,6 +1,6 @@
 ---
 name: gainsight-exec-renewal-radar
-description: Tier-stratified exec renewal radar across a 120-day window. Scores accounts via 6-tier composite + save-into-expansion bonus, detects cross-account themes, produces per-tier brief.
+description: Leadership renewal view for CS execs — "show me the renewal radar," "what's at risk this quarter," "renewal forecast by tier," "Enterprise renewal view." Renewals across the portfolio by segment, with cross-account themes per tier.
 user_type: exec
 ---
 
@@ -9,12 +9,13 @@ user_type: exec
 ## Discovery
 
 **Auto-trigger phrases:**
-- "exec renewal radar"
-- "tier-stratified renewal view"
-- "renewals at risk across enterprise/strategic/scale"
-- "120-day renewal radar"
-- "leadership renewal briefing"
-- "what should leadership focus on this quarter"
+- "show me the renewal radar"
+- "what's at risk this quarter"
+- "renewal forecast by tier"
+- "renewals across the portfolio"
+- "renewal picture" / "renewal forecast"
+- "Enterprise renewal view" / "renewals by segment"
+- "where are we vulnerable on renewals"
 
 **Purpose:** A leadership-perspective renewal view ranked per tier, with cross-account theme detection and per-tier resource allocation recommendations. Sibling to `gainsight-csm-book-pulse` (CSM-grade) and `gainsight-renewal-priority-planner` — intentionally different audiences.
 

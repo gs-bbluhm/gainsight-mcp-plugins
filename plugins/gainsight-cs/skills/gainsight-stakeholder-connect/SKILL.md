@@ -1,6 +1,6 @@
 ---
 name: gainsight-stakeholder-connect
-description: Analyze stakeholder alignment for an account or CSM book, then draft personalized outreach emails to reconnect with key contacts. Uses Staircase Personnel Changes + Risk Analysis stakeholder section.
+description: Stakeholder reconnection for CSMs and AEs — "draft outreach to [account]," "who do I need to reach out to," "I need to reconnect with [stakeholder]." Surfaces stale or changed contacts and drafts personalized outreach emails per stakeholder.
 user_type: ic
 ---
 
@@ -9,12 +9,12 @@ user_type: ic
 ## Discovery
 
 **Auto-trigger phrases:**
-- "stakeholder check-in"
 - "draft outreach for [account]"
-- "reconnect with my stakeholders"
-- "who do I need to reach out to"
-- "stakeholder alignment for [account]"
-- "champion check-ins"
+- "reconnect with [account] stakeholders"
+- "who do I need to talk to"
+- "stakeholder check-in for [account]"
+- "champion outreach"
+- "I need to reconnect with my contacts"
 
 **Optimized for:** Cowork (interactive cards + approval gates) and Code (markdown + structured prompts). Cowork is the primary optimization target.
 

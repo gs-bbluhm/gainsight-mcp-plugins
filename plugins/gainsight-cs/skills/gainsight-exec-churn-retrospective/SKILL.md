@@ -1,6 +1,6 @@
 ---
 name: gainsight-exec-churn-retrospective
-description: Quarterly churn retrospective. Combines Gainsight Status=Churned authoritative list + Staircase pattern themes + per-account Churn Analysis.
+description: Post-churn analysis for CS leaders — "churn retrospective," "what we lost this quarter and why," "churn lessons," "what's driving churn." Combines Gainsight's churned-account list with Staircase's pattern themes and per-account churn breakdowns.
 user_type: exec
 ---
 
@@ -10,10 +10,10 @@ user_type: exec
 
 **Auto-trigger phrases:**
 - "churn retrospective"
-- "analyze recent churns"
-- "what patterns drove churn"
-- "churned accounts review"
-- "post-mortem churn analysis"
+- "what we lost this quarter and why"
+- "churn lessons"
+- "post-mortem on churned accounts"
+- "what's driving churn"
 - "find missed signals on churn"
 
 **Purpose:** Quarterly retrospective combining authoritative Gainsight data (Status = "Churned", churn_date) with Staircase's pattern themes and per-account Churn Analysis structured output. The output also surfaces the gap of accounts that churned WITHOUT a Staircase Churn Analysis firing — feedback for trigger tuning.
