@@ -52,7 +52,7 @@ The agent doesn't have a reliable "what surface am I in" signal yet. Default heu
 **Purpose:** Identity strip at the top of every multi-tab skill output. The single biggest "looks like an app vs looks like a chat dump" signal.
 
 **Anatomy:**
-- Branded color strip (Gainsight orange `#FF7A00` / Staircase navy `#1A2C5C` / neutral plugin teal `#0F8E8E` — one canonical brand color per plugin)
+- Branded color strip (Gainsight CS blue `#1976D2` / Staircase navy `#1A2C5C` / neutral plugin teal `#0F8E8E` — one canonical brand color per plugin)
 - Icon (📊 / 📞 / 🎯 / 🔄 — semantic to the skill)
 - Skill name · persona · scope · date (compact, single line)
 - Optional right-side affordances: refresh, help (`⟳` / `?`)

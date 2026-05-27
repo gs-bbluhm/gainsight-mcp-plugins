@@ -37,7 +37,7 @@ One canonical brand color per plugin. Used for the app header strip, primary CTA
 
 | Plugin | Brand color | Hex | Use |
 |---|---|---|---|
-| `gainsight-cs` | Gainsight orange | `#FF7A00` | App header, primary CTAs |
+| `gainsight-cs` | Gainsight CS blue | `#1976D2` | App header, primary CTAs |
 | (future) `staircase-only` | Staircase navy | `#1A2C5C` | App header, primary CTAs |
 | (future) `cs-neutral` | Plugin teal | `#0F8E8E` | App header, primary CTAs |
 

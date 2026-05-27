@@ -298,7 +298,7 @@ Render the colored app header component (`cowork-component-library.md` §1) with
 - **Title:** "Book Pulse"
 - **Persona:** the CSM's name
 - **Date:** "Week of <date>"
-- **Brand:** `gainsight` (Gainsight orange `#FF7A00`)
+- **Brand:** `gainsight` (Gainsight CS blue `#1976D2`)
 
 #### Tab navigation with counts
 

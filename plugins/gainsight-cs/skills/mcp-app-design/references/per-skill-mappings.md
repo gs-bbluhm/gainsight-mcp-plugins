@@ -28,7 +28,7 @@ Then render. Content is adaptive; chrome is fixed.
 
 | Plugin | Brand color | Use |
 |---|---|---|
-| `gainsight-cs` | Gainsight orange `#FF7A00` | App header strip, primary CTAs, focused states |
+| `gainsight-cs` | Gainsight CS blue `#1976D2` | App header strip, primary CTAs, focused states |
 
 All skills in `gainsight-cs` use the same brand color. Skill-specific identity comes from the **icon** in the colored header.
 
@@ -36,7 +36,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-csm-book-pulse
 
-**Brand:** gainsight orange · **Icon:** 📊 · **Title:** Book Pulse
+**Brand:** gainsight CS blue · **Icon:** 📊 · **Title:** Book Pulse
 
 **Tabs (4):**
 | # | Tab | Count source |
@@ -80,7 +80,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-account-workspace
 
-**Brand:** gainsight orange · **Icon:** 🧭 · **Title:** Account Workspace
+**Brand:** gainsight CS blue · **Icon:** 🧭 · **Title:** Account Workspace
 
 **Tabs (4):**
 | # | Tab | Count source |
@@ -105,7 +105,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-meeting-processor
 
-**Brand:** gainsight orange · **Icon:** 📞 · **Title:** Meeting Recap
+**Brand:** gainsight CS blue · **Icon:** 📞 · **Title:** Meeting Recap
 
 **Tabs (5 — Review Packet structure):**
 | # | Tab | Count source |
@@ -128,7 +128,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-exec-renewal-radar
 
-**Brand:** gainsight orange · **Icon:** 🎯 · **Title:** Renewal Radar
+**Brand:** gainsight CS blue · **Icon:** 🎯 · **Title:** Renewal Radar
 
 **Tabs (4):**
 | # | Tab | Count source |
@@ -151,7 +151,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-renewal-priority-planner
 
-**Brand:** gainsight orange · **Icon:** 🗓 · **Title:** Renewal Planner
+**Brand:** gainsight CS blue · **Icon:** 🗓 · **Title:** Renewal Planner
 
 **Tabs (3):**
 | # | Tab | Count source |
@@ -174,7 +174,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-stakeholder-connect
 
-**Brand:** gainsight orange · **Icon:** 🤝 · **Title:** Stakeholder Connect
+**Brand:** gainsight CS blue · **Icon:** 🤝 · **Title:** Stakeholder Connect
 
 **Tabs (3):**
 | # | Tab | Count source |
@@ -197,7 +197,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-no-qbr-ebr-scheduler
 
-**Brand:** gainsight orange · **Icon:** 📆 · **Title:** EBR Scheduler
+**Brand:** gainsight CS blue · **Icon:** 📆 · **Title:** EBR Scheduler
 
 **Tabs (2):**
 | # | Tab | Count source |
@@ -218,7 +218,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-account-handoff-onboarding
 
-**Brand:** gainsight orange · **Icon:** 🚀 · **Title:** Onboarding Plan
+**Brand:** gainsight CS blue · **Icon:** 🚀 · **Title:** Onboarding Plan
 
 **Tabs (5 — Sequential SP build):**
 | # | Tab | Count source |
@@ -241,7 +241,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-exec-pattern-hunter
 
-**Brand:** gainsight orange · **Icon:** 🔍 · **Title:** Pattern Hunter
+**Brand:** gainsight CS blue · **Icon:** 🔍 · **Title:** Pattern Hunter
 
 **Tabs (3):**
 | # | Tab | Count source |
@@ -262,7 +262,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-exec-churn-retrospective
 
-**Brand:** gainsight orange · **Icon:** 🔁 · **Title:** Churn Retrospective
+**Brand:** gainsight CS blue · **Icon:** 🔁 · **Title:** Churn Retrospective
 
 **Tabs (4):**
 | # | Tab | Count source |
@@ -284,7 +284,7 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 ## gainsight-mcp-setup
 
-**Brand:** gainsight orange · **Icon:** (skip header — linear onboarding, not tabbed)
+**Brand:** gainsight CS blue · **Icon:** (skip header — linear onboarding, not tabbed)
 **Title:** (rendered as setup wizard, not a multi-tab app)
 
 **Layout:** Sequential setup wizard. Each step is a single card:
