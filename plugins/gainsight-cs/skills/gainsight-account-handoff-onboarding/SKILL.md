@@ -37,7 +37,7 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md`
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+- `../mcp-app-design/references/patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -161,7 +161,7 @@ E. Optional: pull last 3-5 customer-meeting recaps from your notes destination f
 
 ## Step 4: Build the onboarding plan
 
-**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (5 tabs: Discovery / Validation / 90-Day Plan / Risks / Open Items). Lead with the header card (onboarding stats), never with prose. Use sortable tables + sequential SP build (one section at a time, approve/edit/skip buttons). Inline choice cards for validation question per section. NEVER dump a markdown wall.
+**Cowork rendering:** Surface as a tabbed app per `mcp-app-design/references/per-skill-mappings.md` (look up this skill's chrome) (5 tabs: Discovery / Validation / 90-Day Plan / Risks / Open Items). Lead with the header card (onboarding stats), never with prose. Use sortable tables + sequential SP build (one section at a time, approve/edit/skip buttons). Inline choice cards for validation question per section. NEVER dump a markdown wall.
 
 **Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 

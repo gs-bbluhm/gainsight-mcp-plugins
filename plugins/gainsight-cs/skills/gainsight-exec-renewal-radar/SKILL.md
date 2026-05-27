@@ -38,7 +38,7 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md`
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+- `../mcp-app-design/references/patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -232,7 +232,7 @@ For every account in the top 10 per tier that meets save-into-expansion criteria
 
 ## Step 4: Per-tier exec brief (the output)
 
-**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (4 tabs: Per-Tier Ent/MM/SMB + Themes). Lead with the header card (portfolio stats), never with prose. Per-tier expandable cards; briefing-grade output, minimal direct posting. Inline choice card for "Drill into a tier?". NEVER dump a markdown wall.
+**Cowork rendering:** Surface as a tabbed app per `mcp-app-design/references/per-skill-mappings.md` (look up this skill's chrome) (4 tabs: Per-Tier Ent/MM/SMB + Themes). Lead with the header card (portfolio stats), never with prose. Per-tier expandable cards; briefing-grade output, minimal direct posting. Inline choice card for "Drill into a tier?". NEVER dump a markdown wall.
 
 **Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 

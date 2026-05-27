@@ -38,7 +38,7 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md`
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+- `../mcp-app-design/references/patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -190,7 +190,7 @@ Closing line:
 
 ## Step 4: Present the packet
 
-**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (2 tabs: Accounts Needing EBR / Scheduled). Lead with the header card (EBR pipeline stats), never with prose. Use sortable tables + per-account scheduling card (one at a time, approve/edit/skip buttons). Inline choice cards for EBR scope selection. NEVER dump a markdown wall.
+**Cowork rendering:** Surface as a tabbed app per `mcp-app-design/references/per-skill-mappings.md` (look up this skill's chrome) (2 tabs: Accounts Needing EBR / Scheduled). Lead with the header card (EBR pipeline stats), never with prose. Use sortable tables + per-account scheduling card (one at a time, approve/edit/skip buttons). Inline choice cards for EBR scope selection. NEVER dump a markdown wall.
 
 **Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 

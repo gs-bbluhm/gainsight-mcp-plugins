@@ -39,7 +39,7 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md` (v1.1)
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
+- `../mcp-app-design/references/patterns.md` — tab structure, action tee-up sequence, preference question cards, working mode picker, color/badge semantics
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -147,7 +147,7 @@ For each active plan with objectives touched by recent activity or Staircase sig
 
 ## Step 4: Present the workbench
 
-**Cowork rendering:** Surface as a tabbed app per `_shared/cowork-output-patterns.md` §9 (4 tabs: State / Recommended Actions / Existing Work / Briefing). Lead with the header card (account stats), never with prose. Use sortable tables + action tee-up sequence (one card at a time, approve/edit/skip buttons). Inline choice cards for preference questions. NEVER dump a markdown wall.
+**Cowork rendering:** Surface as a tabbed app per `mcp-app-design/references/per-skill-mappings.md` (look up this skill's chrome) (4 tabs: State / Recommended Actions / Existing Work / Briefing). Lead with the header card (account stats), never with prose. Use sortable tables + action tee-up sequence (one card at a time, approve/edit/skip buttons). Inline choice cards for preference questions. NEVER dump a markdown wall.
 
 **Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
 

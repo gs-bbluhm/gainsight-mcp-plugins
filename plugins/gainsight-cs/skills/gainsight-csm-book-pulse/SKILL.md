@@ -37,8 +37,9 @@ Read these BEFORE composing operations:
 - `../../_shared/gainsight-output-best-practices.md`
 
 **Rendering discipline (for Cowork app-feel):**
-- `../../_shared/cowork-output-patterns.md` — patterns + when-to-use
-- `../../_shared/cowork-component-library.md` — concrete HTML markup for each visual component
+- `../mcp-app-design/references/patterns.md` — patterns + when-to-use
+- `../mcp-app-design/references/component-library.md` — concrete HTML markup for each visual component
+- `../mcp-app-design/references/per-skill-mappings.md` — per-skill chrome (tabs, components, mode picker). Look up your skill's row FIRST when rendering output.
 
 ## ⚡ Pre-query quality gate (mandatory before any non-trivial Staircase query plan)
 
@@ -282,7 +283,7 @@ Parallel batches of 5 (each batch = 2 analyze_account calls per account).
 
 ## Step 5: Produce the pulse
 
-**Canonical rendering reference:** `_shared/cowork-output-patterns.md` — top-of-doc Rendering Checklist. Read before producing output.
+**Canonical rendering reference:** `mcp-app-design` — top-of-doc Rendering Checklist. Read before producing output.
 
 Detect the surface FIRST. If Cowork → app-feel (tabs + cards + buttons). If Code → scannable markdown. Mode heuristics in the canonical doc.
 
@@ -445,11 +446,11 @@ When user picks an action from a drill-down card:
 3. On approve → write executes → confirmation card → return to Tab 2 with the next priority surfaced or the same account if more moves remain.
 4. If user picked "batch mode" in the working-mode picker, fall back to the markdown action queue with checkboxes.
 
-Full spec: `_shared/cowork-output-patterns.md` §3.
+Full spec: `mcp-app-design/references/patterns.md` (action tee-up).
 
 ### Preference question pattern
 
-When the per-account approach has a meaningful branch (e.g., save-with-incentive vs offboarding-first for a detractor situation), surface an inline choice card. Spec: `_shared/cowork-output-patterns.md` §4.
+When the per-account approach has a meaningful branch (e.g., save-with-incentive vs offboarding-first for a detractor situation), surface an inline choice card. Spec: `mcp-app-design/references/patterns.md` (preference question card).
 
 Examples for this skill:
 - "How should we approach <Account>?" — Save-with-incentive / Offboarding-first / Multi-thread first

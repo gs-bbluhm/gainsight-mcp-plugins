@@ -26,7 +26,9 @@
 - [ ] **Color/badge semantics:** red = risk · yellow = watch · green = healthy · blue = expansion-signal · gray = inactive/closed. Applied to ALL visual elements with signal value (card stripes, pill backgrounds, badge accents). See §10.
 - [ ] **No prose escape hatches.** If you're tempted to write a paragraph explaining what the user should do, convert to a tooltip, help icon, or inline button. See §12 anti-patterns.
 
-**For concrete HTML markup of each component**, see the companion doc: `_shared/cowork-component-library.md` (copy-paste-ready templates).
+**For concrete HTML markup of each component**, see `component-library.md` in this same `references/` folder (copy-paste-ready templates).
+
+**For per-skill chrome decisions** (which tabs / components / patterns each skill uses), see `per-skill-mappings.md` — the bridge doc that tells you what to render for any given skill.
 
 ### Code rendering (CLI-friendly markdown)
 
