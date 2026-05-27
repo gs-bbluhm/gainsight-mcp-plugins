@@ -1,6 +1,6 @@
 {
   "name": "gainsight-cs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Customer Success operations plugin pairing the Staircase AI MCP (communication intelligence) with the Gainsight CS MCP (CRM state + write paths). 13 core skills + 4 experimental, organized as foundation (MCP expertise + role-adaptive onboarding) + IC workflows (book pulse, account workspace, meeting processor, handoff, stakeholder outreach, EBR scheduling) + exec workflows (renewal radar, churn retrospective, pattern hunter, renewal priority planner). Cowork-first design with approval gates on every customer-facing write.",
   "author": { "name": "Gainsight + Staircase AI" },
   "keywords": [
