@@ -107,22 +107,38 @@ All skills in `gainsight-cs` use the same brand color. Skill-specific identity c
 
 **Brand:** gainsight CS blue · **Icon:** 📞 · **Title:** Meeting Recap
 
-**Tabs (5 — Review Packet structure):**
-| # | Tab | Count source |
-|---|---|---|
-| 1 | Email recap | 1 (draft) |
-| 2 | Timeline activity | 1 (draft) |
-| 3 | CTAs | Risk CTA + any action-item CTAs |
-| 4 | SP updates | Touched objectives |
-| 5 | Wins | Captured advocacy quotes + Verified Outcomes |
+**Tabs (5):**
+| # | Tab | Default? | Count source |
+|---|---|---|---|
+| 1 | **Summary** ⭐ | YES — landing | — (no count; this is the overview) |
+| 2 | Email | No | 1 (draft) |
+| 3 | Gainsight | No | Timeline + CTAs + SP updates combined |
+| 4 | Wins | No | Advocacy quotes + Verified Outcomes captured |
+| 5 | Briefing | No | Staircase reconciliation + Plan Info gaps + open observations |
 
-**Per-tab components:** action proposal card for each artifact (one per tab, approve/edit/skip buttons).
+**Tab 1 (Summary) components — landing view, the at-a-glance:**
+- Colored app header (📞 + Meeting Recap + customer + date/attendees)
+- TLDR paragraph (2-3 sentences)
+- Compact signals strip with color stripes (Health · Sentiment · Days to renewal · Open CTAs · Active SPs)
+- Action items table (5-7 rows max, with linked-artifact chips)
+- Win quote preview (1-2 lines, expandable to full Wins tab)
+- Primary CTA button: `[ Approve all <N> writes ]` (fast-path)
 
-**Working mode picker:** NO (sequential approval per artifact is the inherent flow)
-**Action tee-up:** sequential per artifact
-**Sticky footer:** YES, shows the queued artifact count + Review all
-**Preference questions:** rare (per-artifact "approve / edit / skip" handles most branches)
-**Approval card variants:** all 5 used (email · CTA · SP · Timeline · slack if applicable)
+**Tab 2 (Email) components:** action proposal card (`--email` variant) with Gmail draft preview + Verify Before Sending checklist + approve/edit/skip.
+
+**Tab 3 (Gainsight) components:** stacked sub-cards (Timeline activity + Risk CTA with Tasks + SP updates if active SP). Each sub-card stands alone with its own approval state.
+
+**Tab 4 (Wins) components:** advocacy quote callouts (`--success`) with Save-to-advocacy-library button per quote + Reference Customer candidate flagging. Verified Outcome captures with Save-to-outcome-library buttons.
+
+**Tab 5 (Briefing) components:** Staircase reconciliation note (`--info` callout), Plan Info gap flags with Suggest-update-for-Gainsight-UI buttons, open items not in action items.
+
+**Working mode picker:** NO (the Summary tab IS the overview; users can drill into per-artifact tabs at their pace)
+**Action tee-up:** per-tab sequential approval. Sticky footer tracks queued writes across tabs.
+**Sticky footer:** YES, updates live as user approves per-tab writes. `[ Review all ] [ Post all ]` once everything is approved.
+**Preference questions:** rare (per-artifact approve/edit/skip handles most branches)
+**Approval card variants:** all used — email · CTA · SP · Timeline · optional slack
+
+**The landing-vs-detail discipline:** Summary tab is THE landing. Per-artifact details live in their own tabs. NEVER dump all artifacts inline on Tab 1 — that's the wall-of-content failure mode this whole design system exists to prevent.
 
 ---
 

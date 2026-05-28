@@ -282,57 +282,164 @@ Skip if no active success plans.
 
 ## Step 5: Present the Review Packet
 
-**Cowork rendering:** Surface as a tabbed app per `mcp-app-design/references/per-skill-mappings.md` (look up this skill's chrome) (5 tabs: Email / Timeline / CTA / Tasks / Wins). Lead with the header card (call recap stats), never with prose. Use sortable tables + sequential approval per artifact (one card at a time, approve/edit/skip buttons). Inline choice cards for preference questions. NEVER dump a markdown wall.
+**Canonical rendering reference:** `mcp-app-design/references/per-skill-mappings.md` (this skill's row) + `patterns.md` + `component-library.md`.
 
-**Code fallback:** Scannable markdown — structured headers, emoji-badged tables, batch-mode action queue with approval syntax.
+Detect surface FIRST. Cowork → tabbed app. Code → scannable markdown. Mode heuristics in patterns.md.
 
-### In Claude Code CLI
+### Cowork rendering (primary optimization target)
 
-Inline markdown sections, one per deliverable, in this order:
+**Layout: colored app header + tab nav with counts + Tab 1 (Summary) as DEFAULT landing. NEVER lead with prose. NEVER dump all artifacts inline as one scroll — that's the wall-of-content failure mode codified in `patterns.md` §12 anti-patterns.**
+
+#### Colored app header (always-on, top of viewport)
+
+Render the colored app header component (`component-library.md` §1) with:
+- **Icon:** 📞
+- **Title:** "Meeting Recap"
+- **Persona:** the customer name (e.g., "Bennett Birch Supply")
+- **Date:** "Sync · <date> · <duration> · <attendees>"
+- **Brand:** `gainsight` (Gainsight CS blue `#1976D2`)
+
+#### Tab navigation with counts
+
+Render the tab nav component (`component-library.md` §4):
 
 ```
-## Meeting Processor – [Customer] [Call Type] [Date]
-
-> Context fan-out complete: Staircase account_id=<id>, Gainsight company_gsid=<id>, <N> open CTAs, <N> active success plans, <N> recent timeline activities.
-> Staircase signal: <one-line sentiment + risk summary with evidence count>
-
-### 1. Email Recap Draft
-**To:** ...
-**Subject:** ...
-
-<full email body>
-
-### 2. Gainsight Timeline Activity
-**Subject:** ...
-**Type:** ...
-**Content:**
-<markdown content>
-
-### 3. Risk CTA  [optional section, only if risk]
-**Subject / Priority / Owner / Due:** ...
-**Reason:** ...
-
-### 4. Success Plan Updates  [optional]
-Table of objective | new status | next step | comment
-
-### 5. Action Items
-| Action | Owner | Due | Notes |
-
-### 6. Wins
-> "<quote>" — Name
-
-### 7. Reconciliation Note  [optional, only if Staircase and transcript diverge]
-
----
-**Approve to post:** Reply with `approve all`, `approve 1,2,5` (selective), or
-`edit <#>` to revise a specific deliverable before posting.
+Summary · Email (1) · Gainsight (N) · Wins (N) · Briefing (N)
 ```
 
-Also write the full packet to an artifact file (e.g. `meeting-processor-<customer>-<date>.md` in the user's workspace) so the user can grab it from disk.
+- "Summary" is the DEFAULT landing tab. No count.
+- Email count = number of draft emails (typically 1)
+- Gainsight count = Timeline activities + CTAs + SP updates combined
+- Wins count = advocacy quotes + Verified Outcomes captured
+- Briefing count = reconciliation notes + open observations + flagged gaps
 
-### In Claude Cowork
+#### Tab 1 · Summary (the default landing — TLDR + actions + signals at-a-glance)
 
-Same content, but render the Email + Timeline activity as inline cards with copy buttons (Cowork supports this via the conversation UI), and keep the rest as clean markdown. Action items as an inline table. If `show_widget` is available, use the tabbed widget pattern from `references/widget-design.md`.
+**Render in this order:**
+
+1. **TLDR paragraph** (2-3 sentences max) — what was the call, what came out, what's queued. Example: "35-min sync with Travis Villegas + Nicholas Newman. 23% CTR lift confirmed, bulk-import friction surfaced, sister-brand expansion intro requested. 4 action items, 3 writes queued for Gainsight."
+
+2. **Compact signals strip** (signal-color stripes per `component-library.md` §2 modifiers):
+   - Health · <N> · stripe by range (red <40, amber 40-60, green 60+, blue 80+)
+   - Sentiment · <N> · same banding
+   - Days to renewal · <N> · stripe red (<60), amber (60-120), green (>120)
+   - Open CTAs · <N>
+   - Active SPs · <N> · stripe red if zero AND renewal <90d
+
+3. **Action items table** (5-7 rows max, more goes in expandable):
+
+   | Action | Owner | Due | Linked artifact |
+   |---|---|---|---|
+   | <action> | <name> | <date> | → CTA / SP / Email |
+
+   Each row's "Linked artifact" cell is a chip linking to the relevant Gainsight tab card.
+
+4. **Win quote preview** (1-2 lines, expandable to full Wins tab):
+   > "<verbatim quote>" — Travis Villegas, Marketing Lead
+
+5. **Primary CTA button** at the bottom: `[ Approve all <N> writes ]` (fast-path for users who skim the tabs and just want to ship)
+
+**Do NOT include guidance prose** ("Review packet is up. Three approval-gated writes queued — use the buttons...") on this tab. The tabs + buttons signal what's available without prose.
+
+#### Tab 2 · Email (the Gmail recap draft)
+
+Render the action proposal card (`component-library.md` §9) with `--email` variant:
+- To / CC / Subject lines
+- Full email body preview (collapsible if >250 words)
+- VERIFY BEFORE SENDING checklist (every external commitment in the email gets a verify bullet)
+- `[ Approve & create Gmail draft ] [ Edit ] [ Skip ]`
+
+#### Tab 3 · Gainsight (Timeline + CTA + SP updates consolidated)
+
+Sub-cards within the tab — these are all Gainsight writes so grouping them feels natural:
+
+1. **Timeline activity card** (`--timeline` action card variant): subject, activity_type, content preview, `[ Approve & post ]`
+2. **Risk CTA card** (`--cta` action card variant): name, type, priority, owner, due, why-bullets, Tasks (per `component-library.md` §6 drill-down pattern), `[ Approve & create in Cockpit ]`
+3. **SP updates card** (`--sp` action card variant, ONLY if active SP exists): per-objective status change + comment, `[ Approve all SP updates ]`
+
+Stacked vertically within Tab 3. Each sub-card stands alone with its own approval state.
+
+#### Tab 4 · Wins (advocacy + Verified Outcome capture)
+
+Two sub-sections:
+
+1. **Advocacy quotes captured**:
+   - Each as a callout (`component-library.md` §3, `--success` variant) with quote + attribution + capture-date
+   - `[ Save to advocacy library ]` button per quote
+   - If a stakeholder qualifies as a Reference Customer candidate (advocacy quote + verified outcome + named): show `[ Flag as Reference Customer candidate ]` button
+
+2. **Verified Outcomes captured**:
+   - Each with the concrete value + measurement + stakeholder attribution
+   - `[ Save to outcome library ]` per outcome
+
+#### Tab 5 · Briefing (Staircase reconciliation + observations)
+
+Briefing-grade content — context anchors and gap-flagging, not action surfaces:
+
+1. **Staircase reconciliation note** (`component-library.md` §3, `--info` variant):
+   - Health / Sentiment delta between Staircase 90-day signal and today's call
+   - Explanation of why the numbers diverge (if they do)
+   - Evidence references with comm IDs
+
+2. **Plan Info gaps** (where Gainsight company-record fields are sparse):
+   - Renewal Risk Summary · empty? Flag.
+   - Expansion Opportunity Summary · empty? Flag.
+   - Key Outcomes Achieved · empty? Flag.
+   - Each gap has a `[ Suggest update for Gainsight UI ]` button (UI write, not MCP).
+
+3. **Open items not in action items**:
+   - Customer-side commitments without owner clarity
+   - Cross-team escalations needed
+   - Each has contextual action button.
+
+### Action tee-up sequence (the key behavioral pattern)
+
+**Do NOT dump all artifacts as one scrollable wall on the landing tab.** The Summary tab gives the at-a-glance picture. Per-artifact details + approvals live in their respective tabs. This is the fundamental tabbed-app design pattern — landing = overview, tabs = depth.
+
+When user approves a write in any tab (Email / Gainsight sub-card / SP / etc.):
+1. Sticky pending-action footer (`component-library.md` §10) updates: `2 of 3 approved · [ Review all ] · [ Post all ]`
+2. On final approve, all queued writes execute in order: Timeline → CTA → SP updates → email-to-Gmail-drafts
+3. Confirmation card with Gsids + links per write that landed
+
+### Code rendering (CLI fallback)
+
+The legacy inline markdown structure still works for Code users. Keep it scannable:
+
+```markdown
+# 📞 Meeting Recap — <Customer> · <date>
+
+## TLDR
+<2-3 sentence summary>
+
+## Signals
+- Health <N> · Sentiment <N> · Days to renewal <N> · Open CTAs <N> · Active SPs <N>
+
+## Action items
+| # | Action | Owner | Due | Linked |
+| 1 | ... | ... | ... | ... |
+
+## Email recap draft
+**To/CC/Subject:** ...
+
+<full body>
+
+## Gainsight writes
+1. **Timeline activity** — <subject> [`approve 1`]
+2. **Risk CTA** — <name> [`approve 2`]
+3. **SP updates** — <objective list> [`approve 3`]
+
+## Wins
+- "<quote>" — <stakeholder>
+- Verified outcome: <metric>
+
+## Briefing notes
+- Staircase reconciliation: ...
+- Plan Info gaps: ...
+
+Reply `approve all`, `approve 1,3` (selective), or `edit <#>` to revise.
+```
+
+Also write the full packet to `inbox/workshop/meeting-processor-<customer>-<date>.md` for disk access.
 
 ---
 

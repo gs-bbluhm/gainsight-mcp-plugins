@@ -16,7 +16,7 @@
         "email": "bbluhm@gainsight.com"
       },
       "category": "customer-success",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "source": "./plugins/gainsight-cs",
       "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
       "tags": [
