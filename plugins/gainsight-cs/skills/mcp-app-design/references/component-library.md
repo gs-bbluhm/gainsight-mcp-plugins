@@ -179,6 +179,7 @@ The Risk and Expansion cards get color-stripe accents (left border or top border
 - `metric-card--neutral` — no stripe (book size, totals, counts without signal)
 
 **Rules:**
+- Every card carries a visible border and a subtle surface fill so even neutral (no-stripe) cards read as real data tiles, not muted text. Signal cards layer their color stripe on top of that border. (Refinement 2026-06-05 from Cowork render feedback: borderless neutral cards looked too flat.)
 - NEVER use 4+2 (4 cards row + 2 cards row with empty space). Looks broken.
 - If you only have 4 metrics, use `metric-grid--2x2` (2×2) — don't try to fill 6 slots with weak metrics.
 - The first 2 metrics are usually neutral (book size, ARR). Subsequent metrics carry signal stripes where appropriate.
@@ -266,6 +267,7 @@ The Risk and Expansion cards get color-stripe accents (left border or top border
 **Rules:**
 - 3-5 tabs max. More = scan failure.
 - Counts only on tabs with countable items (Priorities, Active Work, Watch). Skip on overview/at-a-glance tabs.
+- The count renders as a small inline pill/badge tight against the label, NOT trailing text with a gap. The `tab-nav__count` span follows the label with no whitespace between them. (Refinement 2026-06-05 from Cowork render feedback: gapped counts read as loose text, not an app badge.)
 - Active tab gets the brand color underline or bottom border.
 - Tab labels are short noun phrases. "Priorities" not "Things to focus on this week."
 
@@ -673,7 +675,8 @@ The Risk and Expansion cards get color-stripe accents (left border or top border
   - `action-card--timeline` — for Timeline activity creates
   - `action-card--slack` — for Slack messages
 - ALWAYS include `action-card__verify` block when sending external comms (emails, Slack to customer, etc.). NEVER skip for internal-only writes (CTA tasks, Timeline activities).
-- "Approve" wording matches the destination: "Approve & send to drafts" (Gmail), "Approve & post" (Gainsight write), "Approve & schedule" (calendar).
+- "Approve" wording matches the destination but stays SHORT enough to fit the button: "Approve → drafts" (Gmail), "Approve → post" (Gainsight write), "Approve → schedule" (calendar). Avoid long labels like "Approve & send to drafts" that overflow. (Refinement 2026-06-05 from Cowork render feedback.)
+- **Reply-approval cards lead with an incoming-context block** so the user can validate the draft against what they are responding to. Above the draft preview, render an `action-card__incoming` section: sender + who is on the thread, a 1-2 line thread TLDR, the actual quote of the ask (`action-card__quote`), and a deep-link to the source (`action-card__threadlink`, e.g. "View full email in Gmail"). Then an `action-card__divider` labeled YOUR DRAFT, then the preview. Never ask the user to approve a reply they cannot see the trigger for. (Added 2026-06-05.)
 
 ---
 
