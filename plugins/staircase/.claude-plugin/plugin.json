@@ -1,0 +1,23 @@
+{
+  "name": "staircase",
+  "version": "2.0.0-beta.1",
+  "description": "Staircase AI account intelligence for Claude. Turns the Staircase MCP into reliable workflows for CSMs, account managers, and CS leaders: book triage, account deep dive, meeting prep, risk check, follow-up draft, account handoff, renewal watchlist, risk radar, expansion scout, churn review, voice of customer, team manager, and manager 1:1 prep. Report-first and evidence-backed: structured Staircase reports for complete lists and rankings, then lifecycle events, communications, and verbatim evidence for the why. Resolves your book automatically on first use. Read-only; no CRM writes. Requires the Staircase AI connector.",
+  "author": { "name": "Staircase AI" },
+  "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
+  "repository": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
+  "license": "MIT",
+  "keywords": [
+    "staircase",
+    "customer-success",
+    "account-intelligence",
+    "csm",
+    "renewal",
+    "expansion",
+    "risk",
+    "churn",
+    "voice-of-customer",
+    "meeting-prep",
+    "handoff",
+    "mcp"
+  ]
+}

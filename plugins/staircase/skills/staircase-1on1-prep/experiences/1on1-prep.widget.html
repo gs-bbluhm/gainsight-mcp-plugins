@@ -1,0 +1,119 @@
+<!-- 1:1 Prep: show_widget TEMPLATE (manager's per-teammate brief, chat-embedded).
+     Render inside Claude via mcp__visualize__show_widget (call read_me first). This is a FRAGMENT:
+     no DOCTYPE/html/head/body. Repopulate PERSON and ACCOUNTS from team_engine.py's person_view
+     (or a fresh person-scoped pull). Reuses staircase-book-triage's 7-motion taxonomy, scoped to
+     one person's book, not a re-derivation of it.
+     PERSON shape: {n:name, ti:title, bk:accounts, ar:book ARR, rkr:at_risk_$, rn90:renewals_90d,
+     eff:effort_hrs, p90:team_overwhelmed_threshold_hrs, pct:effort_percentile (0-1), rt:response_hrs,
+     neg:neg_sentiment_ratio, overwhelmed:bool, bandwidth_candidate:bool (renamed from
+     coverage_gap; this reads as the person's bandwidth, not account coverage),
+     xh:expansion_heating_count}.
+     ACCOUNTS shape: [{id, n:account_name, r:revenue, rk:risk_level, h:health, rn:"YYYY-MM-DD",
+     d:days_to_renewal, mt:0|1 multiThreaded, motion:"churn"|"renewal"|"silent"|"blindsided"|
+     "fragile"|"cadence"|"expansion", tier:"lost"|"signal"|null (churn only), sg:one-line signal}].
+     Progressive disclosure: row (free) -> inline accordion (click row, expand in place, never a top
+     panel) -> sendPrompt live deep-dive per account (staircase-account-deep-dive / staircase-risk-check)
+     and a "zoom out to team" button back to staircase-team-manager. -->
+<h2 class="sr-only">1:1 prep brief for one teammate: their book by risk motion, personal workload against the overwhelmed test, and expansion pipeline, with click-through to live account deep-dives.</h2>
+<style>
+#op{font-family:var(--font-sans);color:var(--text-primary);font-size:14px;line-height:1.5;padding:1rem 0}
+#op .kpi{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:.7rem .9rem}
+#op .kpi .n{font-size:20px;font-weight:500}
+#op .kpi .l{font-size:12px;color:var(--text-secondary)}
+#op .callout{border-radius:12px;padding:.8rem 1rem;font-size:13px;margin:10px 0}
+#op .callout.warn{background:var(--bg-danger);color:var(--text-danger)}
+#op .callout.info{background:var(--bg-accent);color:var(--text-accent)}
+#op .callout.ok{background:var(--bg-success);color:var(--text-success)}
+#op .chip{display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--border);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;background:var(--surface-2);color:var(--text-secondary)}
+#op table{width:100%;border-collapse:collapse;font-size:13px}
+#op th{text-align:left;font-weight:500;color:var(--text-secondary);padding:6px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap}
+#op td{padding:7px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+#op tr.row{cursor:pointer}
+#op tr.row:hover td{background:var(--bg-accent)}
+#op .pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:500}
+#op .m-churn{background:var(--bg-danger);color:var(--text-danger)}
+#op .m-renewal,.m-blindsided,.m-fragile{background:var(--bg-warning);color:var(--text-warning)}
+#op .m-silent,.m-cadence{background:var(--surface-2);color:var(--text-secondary)}
+#op .m-expansion{background:var(--bg-accent);color:var(--text-accent)}
+#op .btn{background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;color:var(--text-primary)}
+#op .btn.pri{background:var(--text-accent);color:var(--surface-2);border-color:var(--text-accent)}
+</style>
+<div id="op">
+  <div id="head" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"></div>
+  <div id="callout"></div>
+  <div id="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0"></div>
+  <div id="detail" style="margin:10px 0"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0 8px">
+    <span id="fAll" class="chip on">All motions</span>
+    <span id="fChurn" class="chip"><i class="ti ti-flag" aria-hidden="true"></i> churn</span>
+    <span id="fRenewal" class="chip"><i class="ti ti-clock" aria-hidden="true"></i> renewal</span>
+    <span id="fRisk" class="chip"><i class="ti ti-alert-triangle" aria-hidden="true"></i> silent/blindsided</span>
+    <span id="fExp" class="chip"><i class="ti ti-bulb" aria-hidden="true"></i> expansion</span>
+  </div>
+  <table><thead><tr>
+    <th>Account</th><th>Revenue</th><th>Risk</th><th>Health</th><th>Renews</th><th>Motion</th>
+  </tr></thead><tbody id="body"></tbody></table>
+  <div style="margin-top:16px">
+    <button class="btn" id="zoomOut"><i class="ti ti-arrow-left" aria-hidden="true"></i> Zoom out to the team</button>
+  </div>
+</div>
+<script>
+const PERSON={n:"",ti:"",bk:0,ar:0,rkr:0,rn90:0,eff:0,p90:0,pct:null,rt:0,neg:0,overwhelmed:false,bandwidth_candidate:false,xh:0};
+const ACCOUNTS=[];
+const $=id=>document.getElementById(id);
+const money=v=>v>=1e6?"$"+(v/1e6).toFixed(1)+"M":v>=1e3?"$"+Math.round(v/1e3)+"K":"$"+(v||0);
+const motionLabel={churn:"Churn",renewal:"Renewal risk",silent:"Silent slide",blindsided:"Blindsided",fragile:"Fragile (single-threaded)",cadence:"Gone quiet",expansion:"Expansion heating"};
+let filter="all";
+function head(){
+  const status=PERSON.overwhelmed?"Overwhelmed":PERSON.bandwidth_candidate?"Has bandwidth":"Healthy";
+  const cls=PERSON.overwhelmed?"p-red":PERSON.bandwidth_candidate?"p-blue":"p-green";
+  $("head").innerHTML=`<h1 style="margin:0">${PERSON.n}</h1><span style="font-size:12px;color:var(--text-muted)">${PERSON.ti||""}</span>`;
+}
+function callout(){
+  let cls="ok",text=`Effort ${PERSON.eff}h is within normal range (team p90 ${PERSON.p90}h), response ${PERSON.rt}h is healthy, no overwhelmed signal.`;
+  if(PERSON.overwhelmed){
+    cls="warn";
+    const deg=PERSON.rt>24?`response ${PERSON.rt}h (>24h → degraded)`:`negative-sentiment ratio ${Math.round(PERSON.neg*100)}% (>15% → degraded)`;
+    text=`Effort ${PERSON.eff}h (team p90 ${PERSON.p90}h → HIGH LOAD) AND ${deg} → OVERWHELMED.`;
+  } else if(PERSON.bandwidth_candidate){
+    cls="info";
+    text=`Personal effort ${PERSON.eff}h sits in the bottom 40th percentile among book-carriers (p${Math.round((PERSON.pct||0)*100)}), while the book carries real exposure: likely room to take on more, or their own at-risk accounts need more attention than current effort suggests.`;
+  }
+  $("callout").innerHTML=`<div class="callout ${cls}">${text}</div>`;
+}
+function kpis(){
+  const k=[[String(PERSON.bk),"accounts"],[money(PERSON.ar),"book $"],[money(PERSON.rkr),"at-risk $"],
+    [String(PERSON.rn90),"renewing ≤90d"],[PERSON.eff+"h","personal effort"],[String(PERSON.xh),"expansion heating"]];
+  $("kpis").innerHTML=k.map(x=>`<div class="kpi"><div class="n">${x[0]}</div><div class="l">${x[1]}</div></div>`).join("");
+}
+function motionGroup(m){
+  if(filter==="all")return true;
+  if(filter==="risk")return m==="silent"||m==="blindsided";
+  return m===filter;
+}
+function draw(){
+  const r=ACCOUNTS.filter(a=>motionGroup(a.motion));
+  $("body").innerHTML=r.map(a=>{
+    const hc=a.h>=70?"var(--text-success)":a.h<40?"var(--text-danger)":"var(--text-muted)";
+    const dd=a.d!=null?(a.d<=14?'style="color:var(--text-danger);font-weight:500"':a.d<=30?'style="color:var(--text-warning)"':''):'';
+    return `<tr class="row" data-id="${a.id}"><td style="font-weight:500">${a.n}</td><td>${money(a.r)}</td><td>${a.rk?'<span class="pill m-churn">R'+a.rk+'</span>':'n/a'}</td><td><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:${hc}"></span>${a.h!=null?Math.round(a.h):"n/a"}</td><td ${dd}>${a.rn?a.rn.slice(5)+" · "+a.d+"d":"n/a"}</td><td><span class="pill m-${a.motion}">${motionLabel[a.motion]||a.motion}</span></td></tr>`;
+  }).join("");
+  document.querySelectorAll("#op #body .row").forEach(tr=>tr.onclick=()=>detail(tr.dataset.id));
+}
+function detail(id){
+  const a=ACCOUNTS.find(x=>String(x.id)===id);
+  if(!a)return;
+  $("detail").innerHTML=`<div style="background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:12px;padding:1rem 1.1rem">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div style="font-size:17px;font-weight:500">${a.n}</div><span class="chip" id="dc"><i class="ti ti-x" aria-hidden="true"></i> close</span></div>
+    <div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin:6px 0 12px">${a.sg||""}</div>
+    <button class="btn pri" id="dive"><i class="ti ti-radar-2" aria-hidden="true"></i> Pull the live deep-dive</button>
+  </div>`;
+  $("dc").onclick=()=>{$("detail").innerHTML="";};
+  $("dive").onclick=()=>sendPrompt(`Give me the full live Staircase deep-dive on ${a.n} (account ${a.id}): current drivers with evidence, stakeholder coverage, what has happened in the last 90 days, and the specific next move.`);
+}
+$("zoomOut").onclick=()=>sendPrompt("Run staircase-team-manager for my team.");
+[["fAll","all"],["fChurn","churn"],["fRenewal","renewal"],["fRisk","risk"],["fExp","expansion"]].forEach(([id,val])=>{
+  $(id).onclick=()=>{filter=val;document.querySelectorAll("#op .chip").forEach(c=>c.classList.remove("on"));$(id).classList.add("on");draw();};
+});
+head();callout();kpis();draw();
+</script>

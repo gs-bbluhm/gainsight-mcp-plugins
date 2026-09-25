@@ -31,7 +31,31 @@ The plugin auto-adapts to your role. You run `gainsight-mcp-setup` once at insta
 
 ---
 
-## Get started
+## Plugins in this marketplace
+
+| Plugin | What it is | Needs |
+|---|---|---|
+| **`staircase`** (2.0.0-beta.1) | Staircase AI account intelligence: book triage, meeting prep, risk check, renewal watchlist, risk radar, expansion scout, churn review, voice of customer, team views. Read-only | The Staircase AI connector only |
+| **`gainsight-cs`** | Staircase and Gainsight CS together: book pulse, meeting processor, EBR scheduling, renewal radar, with approval-gated writes to Gainsight (CTAs, Timeline, Success Plans) | Both connectors |
+
+## Staircase plugin: get started
+
+**1. Connect Staircase.** Open Claude → **Settings → Connectors → Browse connectors**, search *Staircase*, pick **Gainsight (Staircase AI)**, and sign in. (In Claude Code you can also run `claude mcp add --transport http staircase-ai https://mcp.staircase.ai/mcp`.)
+
+**2. Install:**
+
+```
+/plugin marketplace add gs-bbluhm/gainsight-mcp-plugins
+/plugin install staircase@gainsight-mcp-plugins
+```
+
+**3. Ask.** No setup step is required: the first skill you use works out which accounts are yours. Try *"what should I focus on in my book this week?"*, *"prep me for my call with [account]"*, *"why is [account] at risk?"*, or *"which renewals in the next 90 days need attention?"*. For a guided tour, say *"run staircase setup"*.
+
+Details, per-skill guidance, and the change log: [`plugins/staircase`](plugins/staircase/README.md) · [CHANGELOG](plugins/staircase/CHANGELOG.md).
+
+---
+
+## Gainsight CS plugin: get started
 
 **1. Install the plugin** (in Claude Code):
 

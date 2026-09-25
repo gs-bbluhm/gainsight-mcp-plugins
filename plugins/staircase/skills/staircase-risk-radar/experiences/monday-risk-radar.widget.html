@@ -1,0 +1,132 @@
+<!-- Monday Risk Radar: show_widget TEMPLATE (leader Risk Radar interactive dashboard).
+     Render inside Claude via mcp__visualize__show_widget (call read_me first). This is a FRAGMENT:
+     no DOCTYPE/html/head/body. Repopulate the DATA array each run from the live cohort report
+     (customer, status=Active, risk_level>=4, renewal InRange this quarter; columns id, owner, tier,
+     revenue_converted, renewal_date, risk_level, health, stakeholders_count, multi_threaded, + a SECOND
+     scoped pull for customer.summary trimmed to the first paragraph).
+     Field map per account: {id, n:name, o:owner, t:tier label (the org's own tier names; the segment chips
+     are derived from the values present), r:revenue, rn:"YYYY-MM-DD",
+     d:days_to_renewal, rk:risk_level, h:"Low"|"Ave"|"Hig", st:stakeholders, mt:0|1 multiThreaded,
+     sg:one-line signal, sm:first-paragraph summary, ch:0|1|2 (0 saveable, 1 churn signal, 2 confirmed lost)}.
+     NOTE: this base scaffold shows the simplest form (top detail panel). The CURRENT spec (SKILL.md is
+     authoritative) adds: (1) first-paragraph customer.summary embedded as the middle disclosure layer;
+     (2) a saveable-vs-confirmed-lost churn split via the DETERMINISTIC `churn` lifecycle event (EXISTS) +
+     churn.synopsis for the confirmed/signal tier (NOT a text heuristic); (3) INLINE accordion: click a row
+     to expand its detail in place (insert a detail <tr> after it, toggle to collapse), never a top panel and
+     never scrollIntoView-to-top. See the Book Triage cockpit render for the motion-chip + churn-tier variant.
+     Click the in-row deep-dive button -> sendPrompt() pulls the LIVE MCP read (the dynamic bridge). -->
+<h2 class="sr-only">Interactive risk radar: at-risk accounts renewing this quarter, filterable by segment and owner and sortable, with click-through to a live Staircase account deep-dive.</h2>
+<style>
+#rr{font-family:var(--font-sans);color:var(--text-primary);font-size:14px;line-height:1.5;padding:1rem 0}
+#rr .kpi{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:.7rem .9rem}
+#rr .kpi .n{font-size:20px;font-weight:500}
+#rr .kpi .l{font-size:12px;color:var(--text-secondary)}
+#rr .chip{display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--border);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;background:var(--surface-2);color:var(--text-secondary)}
+#rr .chip.on{border-color:var(--border-accent);color:var(--text-accent);background:var(--bg-accent)}
+#rr table{width:100%;border-collapse:collapse;font-size:13px}
+#rr th{text-align:left;font-weight:500;color:var(--text-secondary);padding:6px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;white-space:nowrap}
+#rr td{padding:7px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+#rr tr.row{cursor:pointer}
+#rr tr.row:hover td{background:var(--bg-accent)}
+#rr .pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:500}
+#rr .r5{background:var(--bg-danger);color:var(--text-danger)}
+#rr .r4{background:var(--bg-warning);color:var(--text-warning)}
+#rr .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+#rr .in{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:13px;color:var(--text-primary)}
+#rr .btn{background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;color:var(--text-primary)}
+#rr .btn.pri{background:var(--text-accent);color:var(--surface-2);border-color:var(--text-accent)}
+</style>
+<div id="rr">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+    <h1 style="margin:0">Monday risk radar</h1>
+    <span style="font-size:12px;color:var(--text-muted)" id="scope">whole book · at-risk (level 4-5) · renewing this quarter</span>
+  </div>
+  <div id="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0"></div>
+  <div id="detail" style="margin:10px 0"></div>
+  <div style="font-size:12px;color:var(--text-secondary);margin:14px 0 5px">Revenue at risk by segment (click to filter)</div>
+  <div id="segs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <div style="font-size:12px;color:var(--text-secondary);margin:14px 0 5px">Owners carrying the most at-risk revenue (click to filter)</div>
+  <div id="owners" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0 8px">
+    <input id="q" class="in" placeholder="Search account or owner" style="flex:1;min-width:180px">
+    <span id="fUrg" class="chip"><i class="ti ti-clock" aria-hidden="true"></i> renews &lt;30d</span>
+    <span id="fSingle" class="chip"><i class="ti ti-user-x" aria-hidden="true"></i> single-threaded</span>
+    <span id="reset" class="chip"><i class="ti ti-refresh" aria-hidden="true"></i> reset</span>
+  </div>
+  <div id="count" style="font-size:12px;color:var(--text-muted);margin-bottom:4px"></div>
+  <table><thead><tr>
+    <th data-s="n">Account</th><th data-s="o">Owner</th><th data-s="t">Seg</th>
+    <th data-s="r">Revenue</th><th data-s="d">Renews</th><th data-s="rk">Risk</th>
+    <th data-s="h">Health</th><th data-s="cov">Coverage</th>
+  </tr></thead><tbody id="body"></tbody></table>
+</div>
+<script>
+const DATA=[];
+const $=id=>document.getElementById(id);
+const money=v=>v>=1e6?"$"+(v/1e6).toFixed(1)+"M":v>=1e3?"$"+Math.round(v/1e3)+"K":"$"+v;
+let F={seg:null,owner:null,urg:false,single:false,q:"",sort:"r",asc:false};
+function kpis(){
+  const tot=DATA.reduce((a,b)=>a+b.r,0);
+  const own={};DATA.forEach(d=>own[d.o]=(own[d.o]||0)+d.r);
+  const topO=Object.entries(own).sort((a,b)=>b[1]-a[1])[0]||["none",0];
+  const urg=DATA.filter(d=>d.d<=14).length;
+  const k=[["$"+(tot/1e6).toFixed(1)+"M","at risk this quarter"],[DATA.length+" accounts","renewing at level 4-5"],[urg+" accounts","renew within 14 days"],[topO[0],"most loaded ("+money(topO[1])+")"]];
+  $("kpis").innerHTML=k.map(x=>`<div class="kpi"><div class="n">${x[0]}</div><div class="l">${x[1]}</div></div>`).join("");
+}
+function rollups(){
+  const seg={};DATA.forEach(d=>{seg[d.t]=seg[d.t]||[0,0];seg[d.t][0]++;seg[d.t][1]+=d.r;});
+  $("segs").innerHTML=Object.keys(seg).sort((a,b)=>seg[b][1]-seg[a][1]).map(s=>`<span class="chip seg ${F.seg===s?'on':''}" data-seg="${s}">${s} · ${money(seg[s][1])} · ${seg[s][0]}</span>`).join("");
+  const own={};DATA.forEach(d=>{own[d.o]=own[d.o]||[0,0];own[d.o][0]++;own[d.o][1]+=d.r;});
+  const top=Object.entries(own).sort((a,b)=>b[1][1]-a[1][1]).slice(0,8);
+  $("owners").innerHTML=top.map(([o,v])=>`<span class="chip own ${F.owner===o?'on':''}" data-own="${o}">${o} · ${money(v[1])} · ${v[0]}</span>`).join("");
+  document.querySelectorAll(".seg").forEach(c=>c.onclick=()=>{F.seg=F.seg===c.dataset.seg?null:c.dataset.seg;draw();});
+  document.querySelectorAll(".own").forEach(c=>c.onclick=()=>{F.owner=F.owner===c.dataset.own?null:c.dataset.own;draw();});
+}
+function rows(){
+  let r=DATA.filter(d=>(!F.seg||d.t===F.seg)&&(!F.owner||d.o===F.owner)&&(!F.urg||d.d<=30)&&(!F.single||d.mt===0)&&(!F.q||(d.n+" "+d.o).toLowerCase().includes(F.q)));
+  r.sort((a,b)=>{const m=F.asc?1:-1;const x=a[F.sort],y=b[F.sort];return typeof x==="string"?m*x.localeCompare(y):m*(x-y);});
+  return r;
+}
+function draw(){
+  rollups();
+  const r=rows();
+  const sum=r.reduce((a,b)=>a+b.r,0);
+  $("count").textContent=r.length+" accounts · "+money(sum)+" at risk shown";
+  $("fUrg").className="chip"+(F.urg?" on":"");$("fSingle").className="chip"+(F.single?" on":"");
+  $("body").innerHTML=r.map(d=>{
+    const dd=d.d<=14?'style="color:var(--text-danger);font-weight:500"':d.d<=30?'style="color:var(--text-warning)"':'';
+    const hc=d.h==="Low"?"var(--text-danger)":d.h==="Hig"?"var(--text-success)":"var(--text-muted)";
+    const cov=d.mt===0?`<span style="color:var(--text-danger)"><i class="ti ti-user-x" aria-hidden="true"></i> single (${d.st})</span>`:`${d.st} contacts`;
+    return `<tr class="row" data-id="${d.id}"><td style="font-weight:500">${d.n}</td><td style="color:var(--text-secondary)">${d.o}</td><td style="color:var(--text-muted)">${d.t}</td><td>${money(d.r)}</td><td ${dd}>${d.rn.slice(5)} · ${d.d}d</td><td><span class="pill r${d.rk}">R${d.rk}</span></td><td><span class="dot" style="background:${hc}"></span>${d.h}</td><td style="color:var(--text-secondary)">${cov}</td></tr>`;
+  }).join("");
+  document.querySelectorAll("#body .row").forEach(tr=>tr.onclick=()=>detail(+tr.dataset.id));
+}
+function detail(id){
+  const d=DATA.find(x=>x.id===id);
+  const hc=d.h==="Low"?"var(--text-danger)":d.h==="Hig"?"var(--text-success)":"var(--text-muted)";
+  const cov=d.mt===0?`single-threaded · ${d.st} contacts`:`${d.st} contacts · multi-threaded`;
+  $("detail").innerHTML=`<div style="background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:12px;padding:1rem 1.1rem">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div style="font-size:17px;font-weight:500">${d.n}</div><span class="chip" id="dc"><i class="ti ti-x" aria-hidden="true"></i> close</span></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin:8px 0;font-size:13px;color:var(--text-secondary)">
+      <span><span class="pill r${d.rk}">R${d.rk}</span></span>
+      <span><i class="ti ti-user" aria-hidden="true"></i> ${d.o}</span>
+      <span><i class="ti ti-building" aria-hidden="true"></i> ${d.t}</span>
+      <span><i class="ti ti-coin" aria-hidden="true"></i> ${money(d.r)}</span>
+      <span><i class="ti ti-calendar" aria-hidden="true"></i> renews ${d.rn} (${d.d}d)</span>
+      <span><span class="dot" style="background:${hc}"></span>health ${d.h}</span>
+      <span style="color:${d.mt===0?'var(--text-danger)':'var(--text-secondary)'}"><i class="ti ti-users" aria-hidden="true"></i> ${cov}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin:6px 0 12px">${d.sg}</div>
+    <button class="btn pri" id="dive"><i class="ti ti-radar-2" aria-hidden="true"></i> Pull the live deep-dive</button>
+  </div>`;
+  $("dc").onclick=()=>{$("detail").innerHTML="";};
+  $("dive").onclick=()=>sendPrompt(`Give me the full live Staircase deep-dive on ${d.n} (account ${d.id}): current risk drivers with evidence, stakeholder coverage and who the economic buyer is, what has happened in the last 90 days, and the specific save play before the ${d.rn} renewal.`);
+  $("detail").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+$("q").oninput=e=>{F.q=e.target.value.toLowerCase();draw();};
+$("fUrg").onclick=()=>{F.urg=!F.urg;draw();};
+$("fSingle").onclick=()=>{F.single=!F.single;draw();};
+$("reset").onclick=()=>{F={seg:null,owner:null,urg:false,single:false,q:"",sort:"r",asc:false};$("q").value="";draw();};
+document.querySelectorAll("#rr th").forEach(th=>th.onclick=()=>{const s=th.dataset.s;if(F.sort===s)F.asc=!F.asc;else{F.sort=s;F.asc=false;}draw();});
+kpis();draw();
+</script>

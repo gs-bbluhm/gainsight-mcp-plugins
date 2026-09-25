@@ -1,0 +1,204 @@
+<!-- Team Manager roster: show_widget TEMPLATE (across-team interactive cockpit).
+     Render inside Claude via mcp__visualize__show_widget (call read_me first). This is a FRAGMENT:
+     no DOCTYPE/html/head/body. Repopulate the DATA array each run from _shared/scripts/team_engine.py's
+     JSON output (team_pulse.all_members + book.rollup + capacity_signals + expansion, joined client-side
+     by person name before rendering; the skill does this join, not this widget). Also render
+     capacity_signals.not_a_book_carrier as a short footnote list (roster members who match zero
+     accounts under the confirmed book-owner field; informational, not a status).
+     Field map per person: {id, n:name ("Team member" column), ti:title, bk:accounts, ar:book ARR,
+     rk:at_risk_n, rkr:at_risk_$, rn90:renewals_90d (book.rollup[].renewals_90d: a real count, never
+     hardcode 0), eff:personal_effort_hrs, pct:effort_percentile (0-1), rt:response_time_hrs,
+     neg:neg_sentiment_ratio, mtg:attended_meetings (from team_pulse "Attended meetings"),
+     em:sent_emails (from team_pulse "Sent emails"), fl:0|1|2 (0 healthy, 1 overwhelmed, 2
+     bandwidth-candidate, renamed from "coverage gap"; see capacity_signals.method: low
+     personal effort AND book carries at-risk/stale/neglected exposure), xh:expansion_heating_count,
+     top:[{n:account_name, r:revenue, rk:risk_level, h:health_score, rd:renewal_date_iso|null,
+     le:last_engagement_iso|null, why:["at_risk"|"renews_90d",...]}]. This is person_accounts()'s
+     `needs_attention` field: the FULL, UNCAPPED union of this person's at-risk accounts and accounts
+     renewing within 90 days (never a top-2/3 sample; UX review found that capping this
+     list hid real at-risk accounts). A pure at-risk-AND-renews-soon intersection is too narrow (the
+     two conditions rarely overlap; a CSM can carry a dozen at-risk accounts with zero
+     of them renewing in 90 days), so this is the union, each row tagged with why it's here. rn:nearest
+     renewal date iso for the ≤30d filter}.
+     Progressive disclosure: row (free, sortable/filterable) -> inline accordion (click row, expand in
+     place, never a top panel, never position:fixed) -> sendPrompt live hand-off to staircase-1on1-prep,
+     carrying this run's overwhelmed_threshold_hrs and this person's percentile in the prompt text so
+     the 1:1 skill doesn't re-pull the whole team just for a baseline.
+     Second view: a table/map toggle. The map is an SVG quadrant scatter: x = effort percentile, y =
+     book at-risk density (rk/bk), bubble size = book ARR, quadrant color = danger (stretched & exposed,
+     high effort+high risk) / accent (bandwidth candidate, low effort+high risk) / warning (busy, book
+     healthy) / success (healthy, room). Answers "who needs me" at a glance without reading a table row
+     by row (the non-tabular view requested in UX review).
+     Table column order (from UX review): Team member, Status, Effort, Meetings/Emails,
+     Accounts, Book $, At-risk $, Renews ≤90d. Health dropped (redundant with the accordion detail). -->
+<h2 class="sr-only">Interactive team roster: every teammate holding a book, workload and risk-exposure status, filterable and sortable, with a table view and a workload/risk map view, and click-through to a live 1:1 prep hand-off.</h2>
+<style>
+#tm{font-family:var(--font-sans);color:var(--text-primary);font-size:14px;line-height:1.5;padding:1rem 0}
+#tm .kpi{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:.7rem .9rem}
+#tm .kpi .n{font-size:20px;font-weight:500}
+#tm .kpi .l{font-size:12px;color:var(--text-secondary)}
+#tm .chip{display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--border);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;background:var(--surface-2);color:var(--text-secondary)}
+#tm .chip.on{border-color:var(--border-accent);color:var(--text-accent);background:var(--bg-accent)}
+#tm table{width:100%;border-collapse:collapse;font-size:13px}
+#tm th{text-align:left;font-weight:500;color:var(--text-secondary);padding:6px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;white-space:nowrap}
+#tm td{padding:7px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+#tm tr.row{cursor:pointer}
+#tm tr.row:hover td{background:var(--bg-accent)}
+#tm .pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:500}
+#tm .p-red{background:var(--bg-danger);color:var(--text-danger)}
+#tm .p-blue{background:var(--bg-accent);color:var(--text-accent)}
+#tm .p-green{background:var(--bg-success);color:var(--text-success)}
+#tm .p-amber{background:var(--bg-warning);color:var(--text-warning)}
+#tm .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+#tm .in{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:13px;color:var(--text-primary)}
+#tm .btn{background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;color:var(--text-primary)}
+#tm .btn.pri{background:var(--text-accent);color:var(--surface-2);border-color:var(--text-accent)}
+#tm .acct-row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12.5px}
+#tm .acct-row .meta{color:var(--text-secondary);text-align:right}
+#tm .why{display:inline-block;border-radius:999px;padding:0 6px;font-size:10px;font-weight:500;margin-left:5px}
+#tm .quad{fill-opacity:.16}
+#tm .bubble{cursor:pointer;stroke:var(--surface-1,#fff);stroke-width:1.5}
+#tm .axis{font-size:10px;fill:var(--text-muted)}
+#tm .qlabel{font-size:10.5px;fill:var(--text-secondary)}
+</style>
+<div id="tm">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+    <h1 style="margin:0">Team roster</h1>
+    <span style="font-size:12px;color:var(--text-muted)" id="scope">sorted by at-risk revenue by default</span>
+  </div>
+  <div id="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0"></div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <span class="chip on" id="vTable"><i class="ti ti-table" aria-hidden="true"></i> Table</span>
+    <span class="chip" id="vMap"><i class="ti ti-chart-scatter" aria-hidden="true"></i> Workload &amp; risk map</span>
+  </div>
+  <div id="detail" style="margin:10px 0"></div>
+  <div id="tableView">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 8px">
+      <input id="q" class="in" placeholder="Search team member or title" style="flex:1;min-width:180px">
+      <span id="fOver" class="chip"><i class="ti ti-flame" aria-hidden="true"></i> overwhelmed</span>
+      <span id="fGap" class="chip"><i class="ti ti-battery-2" aria-hidden="true"></i> has bandwidth</span>
+      <span id="fUrg" class="chip"><i class="ti ti-clock" aria-hidden="true"></i> renews &lt;30d</span>
+      <span id="reset" class="chip"><i class="ti ti-refresh" aria-hidden="true"></i> reset</span>
+    </div>
+    <div id="count" style="font-size:12px;color:var(--text-muted);margin-bottom:4px"></div>
+    <table><thead><tr>
+      <th data-s="n">Team member</th><th data-s="fl">Status</th><th data-s="eff">Effort</th>
+      <th data-s="mtg">Meetings / emails</th><th data-s="bk">Accounts</th><th data-s="ar">Book $</th>
+      <th data-s="rkr">At-risk $</th><th data-s="rn90">Renews ≤90d</th>
+    </tr></thead><tbody id="body"></tbody></table>
+    <div id="notCarrier" style="font-size:11.5px;color:var(--text-muted);margin-top:10px"></div>
+  </div>
+  <div id="mapView" style="display:none"></div>
+</div>
+<script>
+const DATA=[];
+const NOT_CARRIER=[]; // capacity_signals.not_a_book_carrier: informational footnote, not a status
+const $=id=>document.getElementById(id);
+const money=v=>v>=1e6?"$"+(v/1e6).toFixed(1)+"M":v>=1e3?"$"+Math.round(v/1e3)+"K":"$"+(v||0);
+const fdate=iso=>iso?new Date(iso).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"n/a";
+const whyLabel={at_risk:"At risk",renews_90d:"Renews ≤90d"};
+const whyCls={at_risk:"p-red",renews_90d:"p-amber"};
+let F={over:false,gap:false,urg:false,q:"",sort:"rkr",asc:false};
+let VIEW="table";
+function statusOf(d){return d.fl===1?["Overwhelmed","p-red"]:d.fl===2?["Has bandwidth","p-blue"]:["Healthy","p-green"];}
+function kpis(){
+  const bookSum=DATA.reduce((a,b)=>a+(b.ar||0),0);
+  const riskSum=DATA.reduce((a,b)=>a+(b.rkr||0),0);
+  const riskN=DATA.reduce((a,b)=>a+(b.rk||0),0);
+  const over=DATA.filter(d=>d.fl===1).length;
+  const gap=DATA.filter(d=>d.fl===2).length;
+  const ren90=DATA.reduce((a,b)=>a+(b.rn90||0),0);
+  const xh=DATA.reduce((a,b)=>a+(b.xh||0),0);
+  const k=[[money(bookSum),"team book"],[money(riskSum)+" ("+riskN+")","at-risk $ / accounts"],
+    [over+" people","overwhelmed"],[gap+" people","has bandwidth"],
+    [ren90+" accts","renewing ≤90d"],[xh+" opps","expansion heating"]];
+  $("kpis").innerHTML=k.map(x=>`<div class="kpi"><div class="n">${x[0]}</div><div class="l">${x[1]}</div></div>`).join("");
+}
+function rows(){
+  let r=DATA.filter(d=>(!F.over||d.fl===1)&&(!F.gap||d.fl===2)&&(!F.urg||(d.rn&&daysTo(d.rn)<=30))&&(!F.q||(d.n+" "+d.ti).toLowerCase().includes(F.q)));
+  r.sort((a,b)=>{const m=F.asc?1:-1;const x=a[F.sort]||0,y=b[F.sort]||0;return typeof x==="string"?m*x.localeCompare(y):m*(x-y);});
+  return r;
+}
+function daysTo(iso){return Math.round((new Date(iso)-new Date())/864e5);}
+function draw(){
+  const r=rows();
+  $("count").textContent=r.length+" people shown";
+  $("fOver").className="chip"+(F.over?" on":"");$("fGap").className="chip"+(F.gap?" on":"");$("fUrg").className="chip"+(F.urg?" on":"");
+  $("body").innerHTML=r.map(d=>{
+    const [label,cls]=statusOf(d);
+    return `<tr class="row" data-id="${d.id}"><td style="font-weight:500">${d.n}<div style="font-size:11px;color:var(--text-muted)">${d.ti||""}</div></td><td><span class="pill ${cls}">${label}</span></td><td>${d.eff!=null?d.eff+"h":"n/a"}</td><td>${d.mtg!=null?d.mtg:"n/a"} / ${d.em!=null?d.em:"n/a"}</td><td>${d.bk||0}</td><td>${money(d.ar)}</td><td>${money(d.rkr)} (${d.rk||0})</td><td>${d.rn90||0}</td></tr>`;
+  }).join("");
+  document.querySelectorAll("#tm #body .row").forEach(tr=>tr.onclick=()=>detail(tr.dataset.id));
+  if(NOT_CARRIER.length){
+    $("notCarrier").innerHTML=`<i class="ti ti-info-circle" aria-hidden="true"></i> Not evaluated above (0 accounts under the book-owner field in this pull, so there's no book to weigh against): ${NOT_CARRIER.map(x=>x.n+" ("+x.eff+"h effort)").join(", ")}.`;
+  }
+}
+function acctRow(a){
+  const why=(a.why||[]).map(w=>`<span class="why ${whyCls[w]||'p-blue'}">${whyLabel[w]||w}</span>`).join("");
+  return `<div class="acct-row"><span>${a.n}${why}</span><span class="meta">${money(a.r)} · Risk ${a.rk!=null?a.rk:"n/a"} · Health ${a.h!=null?Math.round(a.h):"n/a"}<br>Renews ${fdate(a.rd)} · Last touch ${fdate(a.le)}</span></div>`;
+}
+function detail(id){
+  const d=DATA.find(x=>String(x.id)===id);
+  if(!d)return;
+  const [label,cls]=statusOf(d);
+  const top=(d.top||[]).map(acctRow).join("")||`<div style="color:var(--text-muted)">No at-risk accounts or accounts renewing in the next 90 days on this book right now.</div>`;
+  $("detail").innerHTML=`<div style="background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:12px;padding:1rem 1.1rem">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div style="font-size:17px;font-weight:500">${d.n} <span class="pill ${cls}">${label}</span></div><span class="chip" id="dc"><i class="ti ti-x" aria-hidden="true"></i> close</span></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin:8px 0;font-size:13px;color:var(--text-secondary)">
+      <span><i class="ti ti-briefcase" aria-hidden="true"></i> ${d.bk||0} accounts · ${money(d.ar)}</span>
+      <span><i class="ti ti-clock" aria-hidden="true"></i> effort ${d.eff!=null?d.eff+"h":"n/a"}${d.pct!=null?" (p"+Math.round(d.pct*100)+")":""}</span>
+      <span><i class="ti ti-mail" aria-hidden="true"></i> response ${d.rt!=null?d.rt+"h":"n/a"}</span>
+      <span><i class="ti ti-bulb" aria-hidden="true"></i> expansion heating ${d.xh||0}</span>
+    </div>
+    ${d.fl===2?`<div style="font-size:12px;color:var(--text-accent);margin:2px 0 10px"><i class="ti ti-battery-2" aria-hidden="true"></i> ${d.reason||"Effort is low relative to this team's book-carriers while their book carries at-risk/stale exposure."}</div>`:""}
+    <div style="font-size:12px;color:var(--text-muted);margin:4px 0 2px">Needs attention: every at-risk account and every account renewing in the next 90 days</div>
+    ${top}
+    <button class="btn pri" id="dive" style="margin-top:12px"><i class="ti ti-user-check" aria-hidden="true"></i> Full 1:1 prep on ${d.n}</button>
+  </div>`;
+  $("dc").onclick=()=>{$("detail").innerHTML="";};
+  $("dive").onclick=()=>sendPrompt(`Run staircase-1on1-prep for ${d.n}. Team baseline for context: overwhelmed threshold is the team's p90 effort hours, and ${d.n}'s personal-effort percentile among book-carriers is ${d.pct!=null?Math.round(d.pct*100)+"%":"unknown"}. Reuse this instead of re-pulling the whole team.`);
+}
+function drawMap(){
+  const w=680,h=420,m=48;
+  const pts=DATA.filter(d=>d.bk>0);
+  const maxAr=Math.max(1,...pts.map(d=>d.ar||0));
+  const rScale=v=>6+22*Math.sqrt((v||0)/maxAr);
+  const riskDensity=d=>d.bk?Math.min(1,(d.rk||0)/d.bk):0;
+  const cx=d=>m+(d.pct||0)*(w-2*m);
+  const cy=d=>h-m-riskDensity(d)*(h-2*m);
+  const bubbles=pts.map(d=>{
+    const x=cx(d),y=cy(d),r=rScale(d.ar);
+    const highEff=(d.pct||0)>=0.5, highRisk=riskDensity(d)>=0.3;
+    const cls=highEff&&highRisk?"p-red":!highEff&&highRisk?"p-blue":highEff&&!highRisk?"p-amber":"p-green";
+    const fill=cls==="p-red"?"var(--text-danger)":cls==="p-blue"?"var(--text-accent)":cls==="p-amber"?"var(--text-warning)":"var(--text-success)";
+    return `<circle class="bubble" data-id="${d.id}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${fill}" fill-opacity="0.55" stroke="${fill}"><title>${d.n}: ${money(d.ar)} book, ${d.rk||0} at-risk of ${d.bk}, effort p${Math.round((d.pct||0)*100)}</title></circle>`;
+  }).join("");
+  $("mapView").innerHTML=`
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Bubble size = book ARR. Position = personal effort percentile (→) vs. share of book at-risk (↑). Click a bubble for the same detail as a table row.</div>
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;max-height:440px">
+      <rect x="${m}" y="${m}" width="${(w-2*m)/2}" height="${(h-2*m)/2}" class="quad" fill="var(--text-accent)"/>
+      <rect x="${m+(w-2*m)/2}" y="${m}" width="${(w-2*m)/2}" height="${(h-2*m)/2}" class="quad" fill="var(--text-danger)"/>
+      <rect x="${m}" y="${m+(h-2*m)/2}" width="${(w-2*m)/2}" height="${(h-2*m)/2}" class="quad" fill="var(--text-success)"/>
+      <rect x="${m+(w-2*m)/2}" y="${m+(h-2*m)/2}" width="${(w-2*m)/2}" height="${(h-2*m)/2}" class="quad" fill="var(--text-warning)"/>
+      <text class="qlabel" x="${m+6}" y="${m+14}">Bandwidth candidates: book at risk, room to help</text>
+      <text class="qlabel" x="${w/2+6}" y="${m+14}">Stretched &amp; exposed: busy, book at risk</text>
+      <text class="qlabel" x="${m+6}" y="${h-m-6}">Healthy: low load, book steady</text>
+      <text class="qlabel" x="${w/2+6}" y="${h-m-6}">Busy, book steady</text>
+      <line x1="${m}" y1="${h-m}" x2="${w-m}" y2="${h-m}" stroke="var(--border)"/>
+      <line x1="${m}" y1="${m}" x2="${m}" y2="${h-m}" stroke="var(--border)"/>
+      <text class="axis" x="${w/2}" y="${h-8}" text-anchor="middle">Personal effort percentile →</text>
+      <text class="axis" x="14" y="${h/2}" text-anchor="middle" transform="rotate(-90 14 ${h/2})">Share of book at-risk →</text>
+      ${bubbles}
+    </svg>`;
+  document.querySelectorAll("#mapView .bubble").forEach(c=>c.onclick=()=>detail(c.dataset.id));
+}
+$("q").oninput=e=>{F.q=e.target.value.toLowerCase();draw();};
+$("fOver").onclick=()=>{F.over=!F.over;draw();};
+$("fGap").onclick=()=>{F.gap=!F.gap;draw();};
+$("fUrg").onclick=()=>{F.urg=!F.urg;draw();};
+$("reset").onclick=()=>{F={over:false,gap:false,urg:false,q:"",sort:"rkr",asc:false};$("q").value="";draw();};
+$("vTable").onclick=()=>{VIEW="table";$("vTable").className="chip on";$("vMap").className="chip";$("tableView").style.display="";$("mapView").style.display="none";};
+$("vMap").onclick=()=>{VIEW="map";$("vMap").className="chip on";$("vTable").className="chip";$("tableView").style.display="none";$("mapView").style.display="";drawMap();};
+document.querySelectorAll("#tm th").forEach(th=>th.onclick=()=>{const s=th.dataset.s;if(F.sort===s)F.asc=!F.asc;else{F.sort=s;F.asc=false;}draw();});
+kpis();draw();
+</script>
