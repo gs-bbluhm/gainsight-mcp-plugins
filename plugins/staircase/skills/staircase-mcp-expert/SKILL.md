@@ -25,9 +25,10 @@ This plugin reads and synthesizes. It never writes to a CRM.
    - One field with a real count: that is the book. No question.
    - Two or more: ask one question naming the fields and counts.
    - None: not a book carrier. If people report to them (`user.manager`) and those people hold books, use team scope; otherwise portfolio scope. A manager whose reports carry no accounts (a product or enablement leader, say) gets portfolio, never an empty team book.
+   - Portfolio scope: ask once whether they're responsible for a slice (a product line, segment, or region). Save it as `scope.filter`, a condition every report adds, and `scope.revenue_field` when the slice has its own revenue field (for a product line, that product's revenue field of 1 or more). Scope to the person's responsibility by default; the whole org only when they have no slice or ask for it.
    - Never assume `customer.owner` is the CSM. Its role differs by org.
 4. **Learn the org's vocabulary.** From the same metadata call, cache the `lifecycle_event.type` options (event types are partly org-specific, and labels differ from ids) and the role-field list. Stakeholder roles are configured per org too: the first time an ask needs Decision Maker, Executive Sponsor, Champion, or Departed, pull the role list (`stakeholder.coverage` in report-recipes.md), propose a mapping, confirm it once, and cache it.
-5. **Write the profile** (`scope.method`, `scope.book_owner_field`, `scope.user_id`, `org.role_fields`, `org.lifecycle_types`, `org.role_map` once mapped) so the next skill skips steps 3 and 4.
+5. **Write the profile** (`scope.method`, `scope.book_owner_field`, `scope.user_id`, `scope.filter` and `scope.revenue_field` when set, `org.role_fields`, `org.lifecycle_types`, `org.role_map` once mapped) so the next skill skips steps 3 and 4.
 
 If `staircase_get_playbook` is available, read its `portfolio_resolution` topic first and prefer it where it differs.
 
