@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1:1 Prep</title>
+<style>
+  /* Fully self-contained. No external network calls, no analytics, no data leaves this file.
+     System font stack only so the file never phones home for fonts. Offline-shippable: a manager
+     may want this open on a second screen during the actual 1:1, so there is no sendPrompt here.
+     Repopulate PERSON/ACCOUNTS below and it renders standalone, same data shape as the chat widget. */
+  :root{
+    --brand:#4B53D4; --brand-soft:#EEF0FD;
+    --ink:#1B1D2B; --ink-soft:#3B3F52; --muted:#6A7080; --faint:#9AA0B0;
+    --line:#E7E8F0; --line-strong:#D5D7E4;
+    --card:#FFFFFF; --hover:#F6F7FC;
+    /* semantic signal colors. yellow = neutral/average, never "concern" */
+    --healthy:#16A46B; --healthy-soft:#E7F6EE; --healthy-ink:#0F7A4D;
+    --neutral:#F4A72E; --neutral-soft:#FFF6E6; --neutral-ink:#9A6300;
+    --atrisk:#E5484D; --atrisk-soft:#FDECEC; --atrisk-ink:#B4262B;
+    --info:#3B7DD8; --info-soft:#E9EFFC; --info-ink:#1F4E96;
+    --shadow:0 1px 2px rgba(20,22,40,.05),0 8px 26px rgba(20,22,40,.08);
+    --font:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--hover);}
+  body{font-family:var(--font);color:var(--ink-soft);line-height:1.45;padding:24px 16px 48px;}
+  .app{max-width:760px;margin:0 auto;}
+  .app-header{display:flex;align-items:center;gap:12px;border-left:4px solid var(--brand);
+    background:var(--brand-soft);border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap;}
+  .app-title{font-size:18px;font-weight:600;color:var(--ink);}
+  .app-sub{font-size:13px;color:var(--muted);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+    padding:16px 18px;margin-bottom:14px;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .kpi .n{font-size:19px;font-weight:600;color:var(--ink);}
+  .kpi .l{font-size:11px;color:var(--muted);}
+  .callout{border-radius:10px;padding:12px 14px;font-size:13.5px;margin-bottom:14px;}
+  .callout.warn{background:var(--atrisk-soft);color:var(--atrisk-ink);}
+  .callout.info{background:var(--info-soft);color:var(--info-ink);}
+  .callout.ok{background:var(--healthy-soft);color:var(--healthy-ink);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-weight:600;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);}
+  td{padding:7px 8px;border-bottom:1px solid var(--line);}
+  .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11px;font-weight:600;}
+  .m-churn{background:var(--atrisk-soft);color:var(--atrisk-ink);}
+  .m-renewal,.m-blindsided,.m-fragile{background:var(--neutral-soft);color:var(--neutral-ink);}
+  .m-silent,.m-cadence{background:var(--hover);color:var(--muted);}
+  .m-expansion{background:var(--info-soft);color:var(--info-ink);}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+  .talking h3{font-size:14px;margin:0 0 6px;}
+  .talking ol{margin:0;padding-left:20px;font-size:13.5px;}
+  .talking li{margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div>
+      <div class="app-title" id="name">1:1 prep</div>
+      <div class="app-sub" id="title"></div>
+    </div>
+  </div>
+  <div class="card"><div id="callout"></div><div class="kpis" id="kpis"></div></div>
+  <div class="card talking">
+    <h3>Talking points</h3>
+    <ol id="points"></ol>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>Account</th><th>Revenue</th><th>Risk</th><th>Health</th><th>Renews</th><th>Motion</th></tr></thead>
+    <tbody id="body"></tbody></table>
+  </div>
+</div>
+<script>
+// Repopulate these two from team_engine.py's person_view (or a fresh person-scoped pull),
+// same shape as the chat-embedded 1on1-prep.widget.html.
+const PERSON={n:"",ti:"",bk:0,ar:0,rkr:0,rn90:0,eff:0,p90:0,pct:null,rt:0,neg:0,overwhelmed:false,bandwidth_candidate:false,xh:0};
+const ACCOUNTS=[];
+const POINTS=[]; // read-only talking-point strings, ordered: win first, then the ask
+const $=id=>document.getElementById(id);
+const money=v=>v>=1e6?"$"+(v/1e6).toFixed(1)+"M":v>=1e3?"$"+Math.round(v/1e3)+"K":"$"+(v||0);
+const motionLabel={churn:"Churn",renewal:"Renewal risk",silent:"Silent slide",blindsided:"Blindsided",fragile:"Fragile (single-threaded)",cadence:"Gone quiet",expansion:"Expansion heating"};
+$("name").textContent=PERSON.n||"1:1 prep";
+$("title").textContent=PERSON.ti||"";
+let cls="ok",text=`Effort ${PERSON.eff}h is within normal range (team p90 ${PERSON.p90}h), response ${PERSON.rt}h is healthy, no overwhelmed signal.`;
+if(PERSON.overwhelmed){
+  cls="warn";
+  const deg=PERSON.rt>24?`response ${PERSON.rt}h (>24h, degraded)`:`negative-sentiment ratio ${Math.round(PERSON.neg*100)}% (>15%, degraded)`;
+  text=`Effort ${PERSON.eff}h (team p90 ${PERSON.p90}h, HIGH LOAD) and ${deg}: overwhelmed.`;
+} else if(PERSON.bandwidth_candidate){
+  cls="info";
+  text=`Personal effort ${PERSON.eff}h sits in the bottom 40th percentile among book-carriers (p${Math.round((PERSON.pct||0)*100)}), while the book carries real exposure: likely room to take on more, or their own at-risk accounts need more attention than current effort suggests.`;
+}
+$("callout").innerHTML=`<div class="callout ${cls}">${text}</div>`;
+const k=[[String(PERSON.bk),"accounts"],[money(PERSON.ar),"book $"],[money(PERSON.rkr),"at-risk $"],
+  [String(PERSON.rn90),"renewing ≤90d"],[PERSON.eff+"h","personal effort"],[String(PERSON.xh),"expansion heating"]];
+$("kpis").innerHTML=k.map(x=>`<div class="kpi"><div class="n">${x[0]}</div><div class="l">${x[1]}</div></div>`).join("");
+$("points").innerHTML=(POINTS.length?POINTS:["Nothing to raise this cycle; book is quiet."]).map(p=>`<li>${p}</li>`).join("");
+$("body").innerHTML=ACCOUNTS.map(a=>{
+  const hc=a.h>=70?"var(--healthy)":a.h<40?"var(--atrisk)":"var(--muted)";
+  return `<tr><td style="font-weight:600">${a.n}</td><td>${money(a.r)}</td><td>${a.rk?'R'+a.rk:"n/a"}</td><td><span class="dot" style="background:${hc}"></span>${a.h!=null?Math.round(a.h):"n/a"}</td><td>${a.rn?a.rn.slice(5)+(a.d!=null?" · "+a.d+"d":""):"n/a"}</td><td><span class="pill m-${a.motion}">${motionLabel[a.motion]||a.motion}</span></td></tr>`;
+}).join("") || `<tr><td colspan="6" style="color:var(--muted)">No flagged accounts on this book.</td></tr>`;
+</script>
+</body>
+</html>

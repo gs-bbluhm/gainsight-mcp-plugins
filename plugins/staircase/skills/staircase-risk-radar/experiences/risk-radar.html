@@ -1,0 +1,770 @@
+<!doctype html>
+<!-- synthetic-data: every account name, figure, and date in this file is invented for demo purposes. The skill replaces DATA and TODAY per run. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staircase Risk Radar</title>
+<style>
+  /* Fully self-contained. No external network calls, no analytics, no data leaves this file.
+     System font stack only so the file never phones home for fonts. */
+  :root{
+    --brand:#4B53D4;            /* Staircase indigo */
+    --brand-soft:#EEF0FD;
+    --ink:#1B1D2B; --ink-soft:#3B3F52; --muted:#6A7080; --faint:#9AA0B0;
+    --line:#E7E8F0; --line-strong:#D5D7E4;
+    --card:#FFFFFF; --hover:#F6F7FC;
+    /* semantic signal colors. yellow = neutral/average, never "concern" */
+    --healthy:#16A46B; --healthy-soft:#E7F6EE; --healthy-ink:#0F7A4D;
+    --neutral:#F4A72E; --neutral-soft:#FFF6E6; --neutral-ink:#9A6300;
+    --atrisk:#E5484D;  --atrisk-soft:#FDECEC;  --atrisk-ink:#B4262B;
+    --info:#3B7DD8;
+    --shadow:0 1px 2px rgba(20,22,40,.05),0 8px 26px rgba(20,22,40,.08);
+    --shadow-lg:0 14px 48px rgba(20,22,40,.20);
+    --font:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:transparent;}
+  body{font-family:var(--font);color:var(--ink-soft);-webkit-font-smoothing:antialiased;line-height:1.45;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  .app{max-width:960px;margin:0 auto;padding:16px 16px 32px;}
+  .app-header{display:flex;align-items:center;gap:12px;border-left:4px solid var(--brand);
+    background:var(--brand-soft);border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;}
+  .logo{width:26px;height:26px;flex-shrink:0;}
+  .app-title{font-size:17px;font-weight:600;color:var(--ink);}
+  .app-sep{color:var(--faint);}
+  .app-sub{font-size:13px;color:var(--muted);}
+  .app-header .spacer{flex:1;}
+
+  .controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;}
+  .seg{display:inline-flex;background:#EEF0F6;border-radius:10px;padding:3px;}
+  .seg button{border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;
+    color:var(--muted);padding:6px 13px;border-radius:8px;transition:.15s;}
+  .seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow);}
+  .seg-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);}
+
+  .stage-wrap{display:flex;gap:16px;align-items:flex-start;}
+  .stage{position:relative;flex:1;min-width:0;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;box-shadow:var(--shadow);padding:6px;}
+  #radar{width:100%;height:auto;display:block;touch-action:manipulation;}
+
+  .node{cursor:pointer;transition:stroke-width .12s ease;}
+  .node:focus-visible{outline:none;}
+  .node.focus-ring{stroke:var(--brand);stroke-width:3px;}
+  .ringline{fill:none;stroke:var(--line-strong);stroke-dasharray:3 4;}
+  .ringband{font-family:var(--mono);font-size:9.5px;fill:var(--faint);letter-spacing:.05em;text-transform:uppercase;}
+  .spoke{stroke:var(--line);stroke-width:1;}
+  .sector-fill-a{fill:#FBFBFE;} .sector-fill-b{fill:#F4F5FB;} .sector-fill-n{fill:#F3F1F9;} .sector-fill-e{fill:#EEF0FD;}
+  .sector-label{font-size:11px;font-weight:700;fill:var(--ink-soft);letter-spacing:.02em;}
+  .sector-sub{font-family:var(--mono);font-size:8.5px;fill:var(--faint);text-transform:uppercase;letter-spacing:.04em;}
+  .center-dot{fill:var(--ink);} .center-txt{font-family:var(--mono);font-size:8.5px;fill:var(--faint);text-transform:uppercase;letter-spacing:.06em;}
+
+  /* legend */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--muted);align-items:center;}
+  .legend .li{display:flex;align-items:center;gap:7px;}
+  .legend .sw{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .legend .sw.hollow{background:transparent;border:2px dashed var(--muted);}
+  .legend .note{font-family:var(--mono);font-size:11px;color:var(--faint);}
+
+  /* radar sweep (ambient) */
+  #sweep{transform-origin:320px 320px;}
+  @media (prefers-reduced-motion: no-preference){ #sweep{animation:sweep 10s linear infinite;} }
+  @keyframes sweep{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  .ringline--faint{stroke-dasharray:2 7;opacity:.55;}
+
+  /* ranked table (staircase-app-design component) */
+  #table-view{max-width:960px;margin:0 auto;}
+  .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:4px 6px;overflow-x:auto;}
+  table.ranked-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .ranked-table thead th{text-align:left;padding:9px 10px;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line);white-space:nowrap;}
+  .ranked-table th.sortable{cursor:pointer;user-select:none;}
+  .ranked-table th.sortable:hover{color:var(--ink-soft);}
+  .ranked-table th .chev{color:var(--brand);font-weight:700;margin-left:2px;}
+  .ranked-table tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap;}
+  .ranked-table tbody tr{cursor:pointer;}
+  .ranked-table tbody tr:hover{background:var(--hover);}
+  .ranked-table td.acct{font-weight:600;color:var(--ink);}
+  .signal-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
+  .signal-dot.hollow{background:transparent!important;border:2px dashed var(--muted);width:11px;height:11px;}
+  .signal-pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .lensdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+  /* tooltip */
+  #tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;
+    padding:9px 11px;font-size:12px;box-shadow:var(--shadow-lg);max-width:230px;opacity:0;transition:opacity .1s;}
+  #tip.show{opacity:1;}
+  #tip .t-name{font-weight:700;font-size:13px;margin-bottom:3px;}
+  #tip .t-row{display:flex;justify-content:space-between;gap:14px;color:#C9CCE6;font-family:var(--mono);font-size:11px;}
+  #tip .t-row b{color:#fff;font-weight:600;}
+
+  /* side panel */
+  #scrim{position:fixed;inset:0;background:rgba(20,22,40,.30);z-index:70;display:none;}
+  #panel{position:fixed;top:0;right:0;height:100%;width:400px;max-width:94vw;z-index:80;background:var(--card);
+    box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.1,1);
+    display:flex;flex-direction:column;}
+  #panel.open{transform:translateX(0);}
+  .ph{padding:18px 20px 14px;border-bottom:1px solid var(--line);position:relative;}
+  .ph .x{position:absolute;right:14px;top:14px;border:0;background:#F0EEF6;width:30px;height:30px;border-radius:8px;
+    cursor:pointer;font-size:16px;color:var(--muted);line-height:1;}
+  .ph .x:hover{background:#E6E4F0;color:var(--ink);}
+  .ph h2{font-size:19px;font-weight:700;color:var(--ink);margin:2px 40px 6px 0;}
+  .ph .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;gap:6px 14px;flex-wrap:wrap;}
+  .ph .meta b{color:var(--ink);font-weight:600;}
+  .pband{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+  .pb{padding:16px 20px;overflow-y:auto;}
+  .plabel{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:14px 0 8px;}
+  .plabel:first-child{margin-top:0;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;}
+  .chip .k{font-weight:500;color:var(--muted);}
+  .lensrow{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13px;color:var(--ink-soft);}
+  .lensrow .ldot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .lensrow b{color:var(--ink);font-weight:600;}
+  .bar-wrap{margin:6px 0 2px;}
+  .bar-track{height:8px;background:#EDEEF4;border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;}
+  .barcap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px;}
+  .play{background:var(--brand-soft);border:1px solid #DADCF7;border-radius:10px;padding:11px 13px;font-size:13px;color:var(--ink-soft);}
+  .play b{color:var(--brand);font-weight:700;}
+  .silent-note{background:var(--neutral-soft);border:1px solid #F3E4C2;border-radius:10px;padding:10px 12px;
+    font-size:12.5px;color:var(--neutral-ink);display:flex;gap:8px;align-items:flex-start;}
+  .footnote{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:16px;line-height:1.5;}
+  @media(max-width:560px){#panel{width:100%;}}
+</style>
+</head>
+<body>
+<h1 class="sr-only">Staircase Risk Radar. Accounts plotted on a polar chart. Accounts nearest the center carry the highest and most urgent churn risk. Node size shows revenue, node color shows health, and the angular sector shows the dominant risk lens.</h1>
+
+<div class="app">
+  <div class="app-header">
+    <svg class="logo" viewBox="0 0 26 26" aria-hidden="true">
+      <circle cx="13" cy="13" r="13" fill="#4B53D4"></circle>
+      <rect x="6"  y="15" width="4" height="5"  rx="1" fill="#fff"></rect>
+      <rect x="11" y="12" width="4" height="8"  rx="1" fill="#fff"></rect>
+      <rect x="16" y="8"  width="4" height="12" rx="1" fill="#fff"></rect>
+    </svg>
+    <span class="app-title">Risk Radar</span>
+    <span class="app-sep">·</span>
+    <span class="app-sub" id="scope-sub">Portfolio churn &amp; contraction risk</span>
+    <span class="spacer"></span>
+    <span class="app-sub" id="asof-sub"></span>
+  </div>
+
+  <div class="controls">
+    <span class="seg-label">View</span>
+    <div class="seg" role="group" aria-label="View mode">
+      <button id="view-radar" class="on" aria-pressed="true">Radar</button>
+      <button id="view-table" aria-pressed="false">Table</button>
+    </div>
+    <span class="seg-label ctrl-radar">Radius</span>
+    <div class="seg ctrl-radar" role="group" aria-label="Radial axis">
+      <button id="axis-acute" class="on" aria-pressed="true">Acuteness</button>
+      <button id="axis-renewal" aria-pressed="false">Renewal timing</button>
+    </div>
+    <span class="seg-label ctrl-radar">Color</span>
+    <div class="seg ctrl-radar" role="group" aria-label="Color mode">
+      <button id="mode-health" class="on" aria-pressed="true">Health</button>
+      <button id="mode-lens" aria-pressed="false">Dominant lens</button>
+    </div>
+    <span class="legend note" id="count-note"></span>
+  </div>
+
+  <div id="radar-view" class="stage-wrap">
+    <div class="stage">
+      <svg id="radar" viewBox="-72 -12 784 664" role="img"
+           aria-label="Polar risk radar. Interactive: use Tab to move between accounts, Enter to open an account's detail.">
+      </svg>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+  <div id="table-view" style="display:none;">
+    <div class="table-wrap">
+      <table class="ranked-table" id="acct-table" aria-label="Accounts, sortable by acuteness or renewal date">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<div id="scrim"></div>
+<aside id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-name" tabindex="-1">
+  <div class="ph">
+    <button class="x" id="panel-close" aria-label="Close detail">✕</button>
+    <div id="panel-band"></div>
+    <h2 id="panel-name"></h2>
+    <div class="meta" id="panel-meta"></div>
+  </div>
+  <div class="pb" id="panel-body"></div>
+</aside>
+
+<script>
+/* ============================================================================
+   CONFIG. Set once per org.
+   ============================================================================ */
+const FISCAL_YEAR_START_MONTH = 1; // 1 = January; set to your fiscal year start
+
+/* ============================================================================
+   DATA (separated from render). The skill repopulates this block per run.
+   The rows below are SYNTHETIC demo data (invented names and figures).
+   Each record: {name, revenue, risk_level (number|null), renewal_date,
+   health_label, health_score, engagement_label, sentiment_label,
+   stakeholders_count, multi_threaded, dominant_lens, silent_risk}
+   dominant_lens ∈ renewal|value|competitive|stakeholder|product|unclassified
+   ============================================================================ */
+const DATA = [
+  {name:"Acme Corp",           revenue:842000,  risk_level:5, renewal_date:"2026-09-15", health_label:"Low",     health_score:18, engagement_label:"Average", sentiment_label:"Issues detected", stakeholders_count:6,  multi_threaded:true,  dominant_lens:"value",        silent_risk:false},
+  {name:"Acme Logistics",      revenue:98000,   risk_level:4, renewal_date:"2026-08-20", health_label:"Low",     health_score:29, engagement_label:"Low",     sentiment_label:"Neutral",         stakeholders_count:1,  multi_threaded:false, dominant_lens:"renewal",      silent_risk:false},
+  {name:"Initech",             revenue:315000,  risk_level:4, renewal_date:"2026-08-28", health_label:"Average", health_score:52, engagement_label:"Low",     sentiment_label:"Negative",        stakeholders_count:2,  multi_threaded:false, dominant_lens:"stakeholder",  silent_risk:false},
+  {name:"Globex",              revenue:1240000, risk_level:4, renewal_date:"2026-10-30", health_label:"Average", health_score:47, engagement_label:"High",    sentiment_label:"Neutral",         stakeholders_count:18, multi_threaded:true,  dominant_lens:"product",      silent_risk:false},
+  {name:"Umbrella",            revenue:560000,  risk_level:5, renewal_date:"2026-12-15", health_label:"Average", health_score:38, engagement_label:"Average", sentiment_label:"Issues detected", stakeholders_count:9,  multi_threaded:true,  dominant_lens:"competitive",  silent_risk:false},
+  {name:"Hooli",               revenue:190000,  risk_level:4, renewal_date:"2027-03-31", health_label:"High",    health_score:86, engagement_label:"High",    sentiment_label:"Neutral",         stakeholders_count:7,  multi_threaded:true,  dominant_lens:"value",        silent_risk:false},
+  {name:"Stark Industries",    revenue:1580000, risk_level:4, renewal_date:"2027-06-30", health_label:"Average", health_score:44, engagement_label:"High",    sentiment_label:"Neutral",         stakeholders_count:24, multi_threaded:true,  dominant_lens:"product",      silent_risk:false},
+  {name:"Globex Health",       revenue:265000,  risk_level:3, renewal_date:"2028-01-31", health_label:"Average", health_score:55, engagement_label:"Average", sentiment_label:"Neutral",         stakeholders_count:11, multi_threaded:true,  dominant_lens:"unclassified", silent_risk:false},
+
+  /* silent / emerging-risk cohort: deteriorating on health/sentiment/engagement, NO fired risk_level.
+     This is the silent net (the whole point). risk_level:null, silent_risk:true, own "emerging" sector. */
+  {name:"Initech Cloud",       revenue:410000,  risk_level:null, renewal_date:"2026-09-30", health_label:"Low",     health_score:21, engagement_label:"Low",     sentiment_label:"Neutral",         stakeholders_count:3,  multi_threaded:true,  dominant_lens:"unclassified", silent_risk:true},
+  {name:"Umbrella Retail",     revenue:72000,   risk_level:null, renewal_date:"2026-11-12", health_label:"Low",     health_score:0,  engagement_label:"Low",     sentiment_label:"Neutral",         stakeholders_count:1,  multi_threaded:false, dominant_lens:"unclassified", silent_risk:true},
+  {name:"Hooli Labs",          revenue:655000,  risk_level:null, renewal_date:"2027-02-15", health_label:"Average", health_score:33, engagement_label:"High",    sentiment_label:"Issues detected", stakeholders_count:14, multi_threaded:true,  dominant_lens:"unclassified", silent_risk:true},
+  {name:"Stark Energy",        revenue:138000,  risk_level:null, renewal_date:"2027-10-29", health_label:"Average", health_score:41, engagement_label:"Average", sentiment_label:"Issues detected", stakeholders_count:5,  multi_threaded:true,  dominant_lens:"unclassified", silent_risk:true}
+];
+
+/* "As-of" date. The skill sets this to the run date; renewal countdowns are relative to it. */
+const TODAY = new Date("2026-08-06T12:00:00");
+
+/* ---- fiscal calendar (derived from FISCAL_YEAR_START_MONTH) ---- */
+function fiscalQuarterStart(d){            /* first day of the fiscal quarter containing d */
+  const monthsIntoFY = (d.getMonth() - (FISCAL_YEAR_START_MONTH - 1) + 12) % 12;
+  return new Date(d.getFullYear(), d.getMonth() - (monthsIntoFY % 3), 1);
+}
+function addMonths(d, n){ return new Date(d.getFullYear(), d.getMonth() + n, 1); }
+function fiscalQuarterLabel(d){            /* e.g. "Q3 FY26"; the fiscal year is named for the calendar year it ends in */
+  const qs = fiscalQuarterStart(d), s0 = FISCAL_YEAR_START_MONTH - 1;
+  const q = Math.floor(((qs.getMonth() - s0 + 12) % 12) / 3) + 1;
+  const fyStartYear = qs.getMonth() >= s0 ? qs.getFullYear() : qs.getFullYear() - 1;
+  const fyEndYear = s0 === 0 ? fyStartYear : fyStartYear + 1;
+  return "Q" + q + " FY" + String(fyEndYear).slice(-2);
+}
+const Q_THIS_START  = fiscalQuarterStart(TODAY);
+const Q_NEXT_START  = addMonths(Q_THIS_START, 3);
+const Q_AFTER_START = addMonths(Q_THIS_START, 6);
+const ONE_YEAR_OUT  = new Date(TODAY.getFullYear() + 1, TODAY.getMonth(), TODAY.getDate(), 12);
+
+/* ---- scoring (see the skill's interactive-experiences reference for the rationale) ---- */
+const SENTIMENT_PENALTY = {"Issues detected":1.0, "Negative":0.85, "Neutral":0.5, "Positive":0.0};
+const ENGAGEMENT_PENALTY = {"Low":1.0, "Average":0.5, "High":0.0};
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+function daysToRenewal(rec){
+  return Math.round((new Date(rec.renewal_date + "T12:00:00") - TODAY) / 86400000);
+}
+function riskSeverity(rec){
+  const flagged = (rec.risk_level != null) ? rec.risk_level/5 : 0;
+  const sPen = SENTIMENT_PENALTY[rec.sentiment_label] ?? 0.5;
+  const ePen = ENGAGEMENT_PENALTY[rec.engagement_label] ?? 0.5;
+  return clamp01(0.35*flagged + 0.25*(1 - rec.health_score/100) + 0.20*sPen + 0.20*ePen);
+}
+function renewalUrgency(rec){
+  const d = daysToRenewal(rec);
+  if (d < 30)  return 1.0;
+  if (d < 60)  return 0.8;
+  if (d < 90)  return 0.6;
+  if (d < 180) return 0.4;
+  if (d < 365) return 0.2;
+  return 0.1;
+}
+function placementRadius(rec){          /* 0 = center (most acute), 1 = outer edge */
+  return clamp01(1 - (0.7*riskSeverity(rec) + 0.3*renewalUrgency(rec)));
+}
+
+/* ---- geometry ---- */
+const CX = 320, CY = 320, R_MIN = 34, R_MAX = 286;
+const SVGNS = "http://www.w3.org/2000/svg";
+const DEG = Math.PI/180;
+
+/* sectors, evenly spaced around the circle (angle in degrees; 0 = east, +cw, screen y down).
+   Silent/emerging-risk accounts get their OWN sector so the leading-indicator cohort reads
+   distinctly from the flagged "unclassified" sector. */
+const SECTOR_DEFS = [
+  {key:"renewal",      label:"Renewal",           sub:"the clock",         fill:"sector-fill-a"},
+  {key:"value",        label:"Value",             sub:"ROI",               fill:"sector-fill-b"},
+  {key:"competitive",  label:"Competitive",       sub:"displacement",      fill:"sector-fill-a"},
+  {key:"stakeholder",  label:"Stakeholder",       sub:"coverage",          fill:"sector-fill-b"},
+  {key:"product",      label:"Product",           sub:"adoption / fit",    fill:"sector-fill-a"},
+  {key:"unclassified", label:"Unclassified",      sub:"flagged, lens tbd", fill:"sector-fill-n"},
+  {key:"emerging",     label:"Emerging (silent)", sub:"no fired flag",     fill:"sector-fill-e"}
+];
+const SECTOR_SPAN = 360 / SECTOR_DEFS.length;   /* ~51.43° per sector */
+const SECTOR_WEDGE = SECTOR_SPAN / 2;           /* half-wedge, for drawing + boundaries */
+const SECTOR_HALF = SECTOR_WEDGE - 4.5;         /* node-fan half-span (leaves a gutter each side) */
+const SECTORS = SECTOR_DEFS.map((s,i)=>({...s, center:(270 + i*SECTOR_SPAN) % 360}));
+const SECTOR_BY_KEY = Object.fromEntries(SECTORS.map(s=>[s.key,s]));
+
+const LENS_COLOR = {
+  renewal:"#4B53D4", value:"#0F8E8E", competitive:"#D6455D",
+  stakeholder:"#E08A2B", product:"#7B61FF", unclassified:"#94A3B8"
+};
+const HEALTH = {
+  Low:    {fill:"var(--atrisk)",  band:"At risk", bandBg:"var(--atrisk-soft)",  bandInk:"var(--atrisk-ink)",  dot:"#E5484D"},
+  Average:{fill:"var(--neutral)", band:"Neutral", bandBg:"var(--neutral-soft)", bandInk:"var(--neutral-ink)", dot:"#F4A72E"},
+  High:   {fill:"var(--healthy)", band:"Healthy", bandBg:"var(--healthy-soft)", bandInk:"var(--healthy-ink)", dot:"#16A46B"}
+};
+
+/* node size from revenue (sqrt scale, legible min/max) */
+const revs = DATA.map(r=>r.revenue);
+const sqMin = Math.sqrt(Math.min(...revs)), sqMax = Math.sqrt(Math.max(...revs));
+function nodeRadius(rec){
+  const t = (Math.sqrt(rec.revenue) - sqMin) / (sqMax - sqMin || 1);
+  return 7 + t * (20 - 7);   /* legible min/max */
+}
+function money(n){
+  if (n >= 1e6) return "$" + (n/1e6).toFixed(n%1e6===0?0:1) + "M";
+  if (n >= 1e3) return "$" + Math.round(n/1e3) + "K";
+  return "$" + n;
+}
+function healthOf(rec){ return HEALTH[rec.health_label] || HEALTH.Average; }
+
+/* ---- layout ----
+   Each node has a target radius = its placement radius (riskiest → smaller → nearer center),
+   and belongs to its dominant-lens sector's angular wedge. A light force simulation then
+   de-clumps: nodes repel on collision and spread into the free radial space inside their wedge,
+   while a spring pulls each back toward its target band and the angle stays clamped to the sector.
+   The center-out ordering (acute nearest the middle) is preserved; only crowded sectors spread. */
+function normAngle(a){ a = a % 360; return a < 0 ? a + 360 : a; }
+
+/* renewal band (fiscal quarters per FISCAL_YEAR_START_MONTH, relative to TODAY). 0 = soonest = innermost. */
+function renewalBandIndex(rec){
+  const d = new Date(rec.renewal_date + "T12:00:00");
+  if (d < Q_NEXT_START)  return 0;            /* this fiscal quarter (and past-due) */
+  if (d < Q_AFTER_START) return 1;            /* next fiscal quarter */
+  if (d <= ONE_YEAR_OUT) return 2;            /* within a year */
+  return 3;                                    /* beyond a year */
+}
+/* unequal bands: the crowded near-term (this quarter) and long-tail (beyond a year) bands get
+   more radial room; the sparse middle two are squeezed. Keeps dense cells legible. */
+const RENEWAL_BAND_F = [[0.00,0.34],[0.34,0.52],[0.52,0.68],[0.68,1.00]];
+
+function computeLayout(axisMode){
+  const nodes = DATA.map((rec,i)=>{
+    const sec = rec.silent_risk ? SECTOR_BY_KEY.emerging
+              : (SECTOR_BY_KEY[rec.dominant_lens] || SECTOR_BY_KEY.unclassified);
+    let tr, rLo, rHi;
+    if (axisMode==="renewal"){                 /* radius = renewal timing, banded, soonest innermost */
+      const [lo,hi] = RENEWAL_BAND_F[renewalBandIndex(rec)];
+      tr  = R_MIN + ((lo+hi)/2)*(R_MAX-R_MIN);
+      rLo = R_MIN + lo*(R_MAX-R_MIN);
+      rHi = R_MIN + hi*(R_MAX-R_MIN);
+    } else {                                   /* radius = acuteness (severity + renewal urgency) */
+      tr  = R_MIN + placementRadius(rec)*(R_MAX-R_MIN);
+      rLo = R_MIN; rHi = R_MAX;
+    }
+    return {rec, i, sector:sec, targetR:tr, rad:tr, rLo, rHi, size:nodeRadius(rec),
+            angle:sec.center, severity:riskSeverity(rec), days:daysToRenewal(rec),
+            angMin:sec.center-SECTOR_HALF, angMax:sec.center+SECTOR_HALF};
+  });
+  /* seed: fan by target radius within each sector's angular span */
+  const bySector = {};
+  nodes.forEach(n=>{ (bySector[n.sector.key] ||= []).push(n); });
+  Object.values(bySector).forEach(group=>{
+    group.sort((a,b)=>a.targetR-b.targetR);
+    const n = group.length;
+    group.forEach((node,idx)=>{
+      const t = n===1 ? 0.5 : idx/(n-1);
+      node.angle = node.angMin + t*(node.angMax-node.angMin);
+    });
+  });
+  /* force simulation */
+  for (let iter=0; iter<560; iter++){
+    nodes.forEach(n=>{ n.x=CX+n.rad*Math.cos(n.angle*DEG); n.y=CY+n.rad*Math.sin(n.angle*DEG); n.dx=0; n.dy=0; });
+    for (let a=0;a<nodes.length;a++){
+      for (let b=a+1;b<nodes.length;b++){
+        const A=nodes[a], B=nodes[b];
+        const dx=B.x-A.x, dy=B.y-A.y, dist=Math.hypot(dx,dy)||0.01;
+        const need=A.size+B.size+5;
+        if (dist<need){ const p=(need-dist)/2/dist; A.dx-=dx*p; A.dy-=dy*p; B.dx+=dx*p; B.dy+=dy*p; }
+      }
+    }
+    nodes.forEach(n=>{
+      let nx=n.x+n.dx, ny=n.y+n.dy;
+      let rad=Math.hypot(nx-CX, ny-CY);
+      let ang=normAngle(Math.atan2(ny-CY, nx-CX)/DEG);
+      rad += (n.targetR - rad)*0.05;                                   /* spring toward true band */
+      rad = Math.max(n.rLo+n.size, Math.min(n.rHi-n.size, rad));       /* keep inside the (banded) plot */
+      ang = Math.max(n.angMin, Math.min(n.angMax, ang));               /* keep inside the wedge */
+      n.rad=rad; n.angle=ang;
+    });
+  }
+  nodes.forEach(n=>{ n.x=CX+n.rad*Math.cos(n.angle*DEG); n.y=CY+n.rad*Math.sin(n.angle*DEG); });
+  return nodes;
+}
+
+/* ---- render the fixed chrome (rings, spokes, sector fills + labels) ---- */
+const svg = document.getElementById("radar");
+function el(tag, attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+function polar(ang, rad){ return [CX+rad*Math.cos(ang*DEG), CY+rad*Math.sin(ang*DEG)]; }
+
+function drawChrome(){
+  /* sector wedges */
+  SECTORS.forEach(s=>{
+    const a0=s.center-SECTOR_WEDGE, a1=s.center+SECTOR_WEDGE;
+    const [x0,y0]=polar(a0,R_MAX), [x1,y1]=polar(a1,R_MAX);
+    const p=el("path",{d:`M${CX},${CY} L${x0},${y0} A${R_MAX},${R_MAX} 0 0 1 ${x1},${y1} Z`, class:s.fill});
+    svg.appendChild(p);
+  });
+  /* concentric band rings + labels (filled per axis mode by drawBands) */
+  svg.appendChild(el("g",{id:"bands"}));
+  /* spokes at sector boundaries */
+  SECTORS.forEach(s=>{
+    const [x,y]=polar(s.center - SECTOR_WEDGE, R_MAX);
+    svg.appendChild(el("line",{x1:CX,y1:CY,x2:x,y2:y,class:"spoke"}));
+  });
+  /* center marker */
+  svg.appendChild(el("circle",{cx:CX,cy:CY,r:3,class:"center-dot"}));
+  const ct=el("text",{x:CX,y:CY+16,"text-anchor":"middle",class:"center-txt",id:"center-txt"}); ct.textContent="most acute"; svg.appendChild(ct);
+  /* sector labels around the rim */
+  SECTORS.forEach(s=>{
+    const [lx,ly]=polar(s.center, R_MAX+22);
+    const anchor = (Math.cos(s.center*DEG)>0.3)?"start":(Math.cos(s.center*DEG)<-0.3)?"end":"middle";
+    const t=el("text",{x:lx.toFixed(0),y:ly.toFixed(0),"text-anchor":anchor,class:"sector-label"}); t.textContent=s.label;
+    svg.appendChild(t);
+    const t2=el("text",{x:lx.toFixed(0),y:(ly+12).toFixed(0),"text-anchor":anchor,class:"sector-sub"}); t2.textContent=s.sub;
+    svg.appendChild(t2);
+  });
+}
+
+/* concentric band rings + labels, redrawn when the radial axis mode changes */
+function drawBands(axisMode){
+  const g=document.getElementById("bands"); g.innerHTML="";
+  const ring=(f,faint)=>{ const r=R_MIN+f*(R_MAX-R_MIN);
+    g.appendChild(el("circle",{cx:CX,cy:CY,r:r.toFixed(1),class:faint?"ringline ringline--faint":"ringline"})); };
+  const lbl=(f,name)=>{ const r=R_MIN+f*(R_MAX-R_MIN);
+    const t=el("text",{x:CX+4,y:(CY-r+3).toFixed(1),class:"ringband"}); t.textContent=name; g.appendChild(t); };
+  const ctx=document.getElementById("center-txt");
+  if(axisMode==="renewal"){
+    const names=["this quarter · "+fiscalQuarterLabel(Q_THIS_START),"next quarter · "+fiscalQuarterLabel(Q_NEXT_START),"within a year","beyond a year"];
+    RENEWAL_BAND_F.forEach(([lo,hi],i)=>{ ring(hi, i===RENEWAL_BAND_F.length-1); lbl((lo+hi)/2, names[i]); });
+    if(ctx) ctx.textContent="renews soonest";
+  } else {
+    ring(0.34); ring(0.67); ring(1.0);
+    lbl(0.17,"acute"); lbl(0.50,"elevated"); lbl(0.84,"watch");
+    if(ctx) ctx.textContent="most acute";
+  }
+}
+
+/* ambient radar sweep: a leading line + a soft trailing gradient wedge, rotated by CSS.
+   pointer-events:none so it never blocks hover/click; the CSS media query gates the motion. */
+function buildSweep(){
+  const g=el("g",{id:"sweep","pointer-events":"none"});
+  const lead=-90, span=58, slices=10;                 /* leading edge at top initially */
+  for(let i=0;i<slices;i++){
+    const a0=lead - span*(i+1)/slices, a1=lead - span*i/slices;
+    const [x0,y0]=polar(a0,R_MAX), [x1,y1]=polar(a1,R_MAX);
+    const op=(0.02 + 0.13*(1 - i/(slices-1))).toFixed(3);   /* brightest at the leading edge, fades back */
+    g.appendChild(el("path",{d:`M${CX},${CY} L${x0.toFixed(1)},${y0.toFixed(1)} A${R_MAX},${R_MAX} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z`,
+      fill:"#4B53D4","fill-opacity":op}));
+  }
+  const [lx,ly]=polar(lead,R_MAX);
+  g.appendChild(el("line",{x1:CX,y1:CY,x2:lx.toFixed(1),y2:ly.toFixed(1),stroke:"#4B53D4","stroke-opacity":"0.35","stroke-width":"1.5"}));
+  svg.appendChild(g);
+}
+
+/* ---- render nodes ---- */
+let colorMode = "health";    /* 'health' | 'lens' */
+let axisMode = "acuteness";  /* 'acuteness' | 'renewal' */
+let NODES = [];
+const nodeEls = new Map();
+
+function nodeFill(node){
+  if (colorMode==="lens") return LENS_COLOR[node.rec.dominant_lens] || LENS_COLOR.unclassified;
+  return healthOf(node.rec).fill;
+}
+function nodeStroke(node){
+  if (colorMode==="lens") return LENS_COLOR[node.rec.dominant_lens] || LENS_COLOR.unclassified;
+  return healthOf(node.rec).dot;
+}
+function drawNodes(){
+  NODES.forEach(node=>{
+    const silent = node.rec.silent_risk;
+    const g=el("g",{class:"node", tabindex:"0", role:"button",
+      "aria-label":`${node.rec.name}. ${money(node.rec.revenue)} revenue. Risk severity ${node.severity.toFixed(2)}. Renewal ${renewalPhrase(node.days)}. Health ${node.rec.health_label}. Open detail.`});
+    const fill = nodeFill(node), stroke = nodeStroke(node);
+    const c=el("circle",{cx:node.x.toFixed(1),cy:node.y.toFixed(1),r:node.size.toFixed(1)});
+    if (silent){                       /* silent / emerging risk: hollow node + dashed ring */
+      c.setAttribute("fill","#ffffff");
+      c.setAttribute("stroke",stroke);
+      /* in renewal-timing mode radius no longer encodes severity, so ring weight does */
+      c.setAttribute("stroke-width", axisMode==="renewal" ? (1.5+node.severity*2.5).toFixed(1) : "2");
+      c.setAttribute("stroke-dasharray","3 3");
+      g.appendChild(c);
+      g.appendChild(el("circle",{cx:node.x.toFixed(1),cy:node.y.toFixed(1),r:3,fill:stroke}));
+    } else {
+      c.setAttribute("fill",fill);
+      /* in renewal-timing mode, fill opacity carries severity */
+      c.setAttribute("fill-opacity", axisMode==="renewal" ? (0.45+node.severity*0.5).toFixed(2) : "0.88");
+      c.setAttribute("stroke","#ffffff");
+      c.setAttribute("stroke-width","1.5");
+      g.appendChild(c);
+    }
+    g.addEventListener("mouseenter",e=>showTip(e,node));
+    g.addEventListener("mousemove",e=>moveTip(e));
+    g.addEventListener("mouseleave",hideTip);
+    g.addEventListener("focus",e=>{g.classList.add("focus-ring");const b=c.getBoundingClientRect();showTipAt(b.left+b.width/2,b.top,node);});
+    g.addEventListener("blur",()=>{g.classList.remove("focus-ring");hideTip();});
+    g.addEventListener("click",()=>openPanel(node));
+    g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openPanel(node);}});
+    svg.appendChild(g);
+    nodeEls.set(node,{g,c});
+  });
+}
+function recolorNodes(){
+  NODES.forEach(node=>{
+    const refs=nodeEls.get(node); if(!refs) return;
+    const stroke=nodeStroke(node);
+    if(node.rec.silent_risk){ refs.c.setAttribute("stroke",stroke); }
+    else { refs.c.setAttribute("fill",nodeFill(node)); }
+  });
+  renderLegend();
+}
+function clearNodes(){ [...svg.querySelectorAll("g.node")].forEach(g=>g.remove()); nodeEls.clear(); }
+function redrawNodes(){ clearNodes(); drawNodes(); }
+
+/* ---- tooltip ---- */
+const tip=document.getElementById("tip");
+function renewalPhrase(d){ return d>=0 ? `in ${d} day${d===1?"":"s"}` : `${Math.abs(d)} day${d===-1?"":"s"} ago`; }
+function tipHTML(node){
+  return `<div class="t-name">${node.rec.name}</div>
+    <div class="t-row"><span>Revenue</span><b>${money(node.rec.revenue)}</b></div>
+    <div class="t-row"><span>Risk severity</span><b>${node.severity.toFixed(2)}</b></div>
+    <div class="t-row"><span>Renewal</span><b>${renewalPhrase(node.days)}</b></div>`;
+}
+function placeTip(cx,cy){                 /* keep the tooltip inside the viewport (flip near edges) */
+  const r=tip.getBoundingClientRect(), w=r.width||220, h=r.height||90, m=8;
+  let left=cx+14, top=cy+14;
+  if(left+w>window.innerWidth-m) left=cx-w-14;
+  if(left<m) left=m;
+  if(top+h>window.innerHeight-m) top=cy-h-14;
+  if(top<m) top=m;
+  tip.style.left=left+"px"; tip.style.top=top+"px";
+}
+function showTip(e,node){ tip.innerHTML=tipHTML(node); tip.classList.add("show"); placeTip(e.clientX,e.clientY); }
+function showTipAt(x,y,node){ tip.innerHTML=tipHTML(node); tip.classList.add("show"); placeTip(x,y); }
+function moveTip(e){ placeTip(e.clientX,e.clientY); }
+function hideTip(){ tip.classList.remove("show"); }
+
+/* ---- side panel (progressive disclosure) ---- */
+const panel=document.getElementById("panel"), scrim=document.getElementById("scrim");
+let lastFocused=null;
+const LENS_PLAY = {
+  renewal:"The renewal is the forcing date. Confirm the decision timeline and book a working session before it lands.",
+  value:"Value is the open question. Assemble the ROI recap and validate outcomes with the economic buyer.",
+  competitive:"A competitor or internal build is in play. Reconfirm differentiation with the sponsor and close the gap.",
+  stakeholder:"Coverage is thin. Map the buying group and multi-thread beyond the primary contact.",
+  product:"Adoption or fit gaps are showing. Line up an enablement or integration path to realized value.",
+  unclassified:"Run a full-risk read to detect which lenses are firing, then route to the matching save play."
+};
+function pill(text, bg, ink){ return `<span class="pband" style="background:${bg};color:${ink}">${text}</span>`; }
+function scoreChip(label, value, dotColor){
+  return `<span class="chip" style="background:#F4F5FA"><span class="ldot" style="width:9px;height:9px;border-radius:50%;background:${dotColor};display:inline-block"></span><span class="k">${label}</span> ${value}</span>`;
+}
+function labelColor(label){
+  if(label==="High"||label==="Positive") return "#16A46B";
+  if(label==="Low"||label==="Issues detected"||label==="Negative") return "#E5484D";
+  return "#F4A72E"; /* Average / Neutral = yellow */
+}
+function openPanel(node){
+  const r=node.rec, h=healthOf(r);
+  lastFocused=document.activeElement;
+  document.getElementById("panel-band").innerHTML =
+    pill(h.band, h.bandBg, h.bandInk) + (r.silent_risk ? " " + pill("Silent risk", "var(--neutral-soft)", "var(--neutral-ink)") : "");
+  document.getElementById("panel-name").textContent=r.name;
+  document.getElementById("panel-meta").innerHTML=
+    `<span>Revenue <b>${money(r.revenue)}</b></span>
+     <span>Risk level <b>${r.risk_level!=null?r.risk_level:"n/a"}</b></span>
+     <span>Renewal <b>${r.renewal_date}</b> (${renewalPhrase(node.days)})</span>`;
+
+  const sev=node.severity, urg=renewalUrgency(r);
+  const single = r.stakeholders_count<=2 || r.multi_threaded===false;
+  const body=document.getElementById("panel-body");
+  body.innerHTML=`
+    <div class="plabel">Risk composite</div>
+    <div class="bar-wrap">
+      <div class="bar-track"><div class="bar-fill" style="width:${(sev*100).toFixed(0)}%;background:${h.dot}"></div></div>
+      <div class="barcap"><span>severity ${sev.toFixed(2)}</span><span>renewal urgency ${urg.toFixed(2)}</span></div>
+    </div>
+
+    <div class="plabel">Signals</div>
+    <div class="chips">
+      ${scoreChip("Health", `${r.health_score} · ${r.health_label}`, labelColor(r.health_label))}
+      ${scoreChip("Sentiment", r.sentiment_label, labelColor(r.sentiment_label))}
+      ${scoreChip("Engagement", r.engagement_label, labelColor(r.engagement_label))}
+    </div>
+
+    <div class="plabel">Coverage</div>
+    <div class="lensrow"><span class="ldot" style="background:${single?'#E5484D':'#16A46B'}"></span>
+      <b>${r.stakeholders_count}</b>&nbsp;stakeholder${r.stakeholders_count===1?"":"s"} ·
+      ${r.multi_threaded ? "multi-threaded" : "single-threaded"}${single?" (thin coverage)":""}</div>
+
+    <div class="plabel">Dominant lens</div>
+    <div class="lensrow"><span class="ldot" style="background:${LENS_COLOR[r.dominant_lens]}"></span>
+      <b style="text-transform:capitalize">${r.dominant_lens}</b></div>
+    <div class="play" style="margin-top:8px"><b>Recommended next move.</b> ${LENS_PLAY[r.dominant_lens]}</div>
+
+    ${r.silent_risk ? `<div class="silent-note" style="margin-top:14px">⚠ Emerging / silent risk: no risk analyst flag has fired, but health, sentiment, and engagement signals put it on a downward slide. Read before it becomes acute.</div>` : ""}
+
+    <div class="plabel" style="margin-top:16px">Blockers &amp; evidence</div>
+    <div class="footnote" style="margin-top:0">This panel is read-only synthesis. The skill repopulates the blockers list and evidence IDs from live communication signals per account. Ground every shared claim in a fetched evidence id.</div>
+  `;
+  scrim.style.display="block"; panel.classList.add("open"); panel.focus();
+}
+function closePanel(){ panel.classList.remove("open"); scrim.style.display="none"; if(lastFocused&&lastFocused.focus)lastFocused.focus(); }
+document.getElementById("panel-close").addEventListener("click",closePanel);
+scrim.addEventListener("click",closePanel);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&panel.classList.contains("open"))closePanel();});
+
+/* ---- legend ---- */
+function renderLegend(){
+  const lg=document.getElementById("legend");
+  let items;
+  if(colorMode==="health"){
+    items=[["#16A46B","Healthy"],["#F4A72E","Neutral"],["#E5484D","At risk"]];
+  } else {
+    items=Object.entries(LENS_COLOR).map(([k,c])=>[c, k.charAt(0).toUpperCase()+k.slice(1)]);
+  }
+  const centerLbl = axisMode==="renewal" ? "renews soonest" : "most acute";
+  const sevNote = axisMode==="renewal" ? `<span class="li note">Fill opacity / ring weight = severity</span>` : "";
+  lg.innerHTML =
+    items.map(([c,l])=>`<span class="li"><span class="sw" style="background:${c}"></span>${l}</span>`).join("") +
+    `<span class="li"><span class="sw hollow"></span>Emerging (silent) risk</span>` +
+    `<span class="li note">Hollow / dashed = emerging risk, no fired analyst (leading indicator) · solid = flagged risk (confirmed)</span>` +
+    sevNote +
+    `<span class="li note">Node size = revenue · center = ${centerLbl}</span>`;
+}
+
+/* ---- toggles ---- */
+let viewMode = "radar";   /* 'radar' | 'table' */
+
+const mHealth=document.getElementById("mode-health"), mLens=document.getElementById("mode-lens");
+function setMode(mode){
+  colorMode=mode;
+  const h=mode==="health";
+  mHealth.classList.toggle("on",h); mLens.classList.toggle("on",!h);
+  mHealth.setAttribute("aria-pressed",String(h)); mLens.setAttribute("aria-pressed",String(!h));
+  recolorNodes();
+  if(viewMode==="table") renderTable();
+}
+mHealth.addEventListener("click",()=>setMode("health"));
+mLens.addEventListener("click",()=>setMode("lens"));
+
+const aAcute=document.getElementById("axis-acute"), aRenewal=document.getElementById("axis-renewal");
+function setAxis(mode){
+  axisMode=mode;
+  const a=mode==="acuteness";
+  aAcute.classList.toggle("on",a); aRenewal.classList.toggle("on",!a);
+  aAcute.setAttribute("aria-pressed",String(a)); aRenewal.setAttribute("aria-pressed",String(!a));
+  drawBands(axisMode);
+  NODES=computeLayout(axisMode);
+  redrawNodes();
+  renderLegend();
+}
+aAcute.addEventListener("click",()=>setAxis("acuteness"));
+aRenewal.addEventListener("click",()=>setAxis("renewal"));
+
+const vRadar=document.getElementById("view-radar"), vTable=document.getElementById("view-table");
+function setView(v){
+  viewMode=v;
+  const r=v==="radar";
+  vRadar.classList.toggle("on",r); vTable.classList.toggle("on",!r);
+  vRadar.setAttribute("aria-pressed",String(r)); vTable.setAttribute("aria-pressed",String(!r));
+  document.getElementById("radar-view").style.display=r?"":"none";
+  document.getElementById("table-view").style.display=r?"none":"";
+  document.querySelectorAll(".ctrl-radar").forEach(e=>e.style.display=r?"":"none");
+  if(!r) renderTable();
+}
+vRadar.addEventListener("click",()=>setView("radar"));
+vTable.addEventListener("click",()=>setView("table"));
+
+/* ---- table view ---- */
+let tableSort={key:"severity", dir:-1};    /* severity desc by default */
+function statePill(rec){
+  return rec.silent_risk
+    ? `<span class="signal-pill" style="background:var(--brand-soft);color:var(--brand)">Silent</span>`
+    : `<span class="signal-pill" style="background:var(--atrisk-soft);color:var(--atrisk-ink)">Flagged</span>`;
+}
+function labelPill(label){
+  const c=labelColor(label);
+  const bg=c==="#16A46B"?"var(--healthy-soft)":c==="#E5484D"?"var(--atrisk-soft)":"var(--neutral-soft)";
+  const ink=c==="#16A46B"?"var(--healthy-ink)":c==="#E5484D"?"var(--atrisk-ink)":"var(--neutral-ink)";
+  return `<span class="signal-pill" style="background:${bg};color:${ink}">${label}</span>`;
+}
+function renderTable(){
+  const rows=DATA.map(rec=>({rec, severity:riskSeverity(rec), days:daysToRenewal(rec)}));
+  rows.sort((a,b)=> tableSort.key==="severity"
+    ? (a.severity-b.severity)*tableSort.dir
+    : (new Date(a.rec.renewal_date)-new Date(b.rec.renewal_date))*tableSort.dir);
+  const chev=k=> tableSort.key===k
+    ? `<span class="chev">${tableSort.dir<0?"▼":"▲"}</span>`
+    : `<span class="chev" style="color:var(--faint)">⇅</span>`;
+  document.getElementById("thead").innerHTML=`<tr>
+    <th></th><th>Account</th><th>Revenue</th>
+    <th class="sortable" id="th-renewal" title="Sort by renewal date">Renewal ${chev("renewal")}</th>
+    <th>State</th>
+    <th class="sortable" id="th-sev" title="Sort by acuteness">Severity ${chev("severity")}</th>
+    <th>Lens</th><th>Health</th><th>Sentiment</th><th>Engagement</th><th>Stkhldrs</th></tr>`;
+  document.getElementById("tbody").innerHTML=rows.map(n=>{
+    const r=n.rec, hc=healthOf(r).dot;
+    return `<tr data-name="${r.name}" tabindex="0" role="button" aria-label="${r.name}, open detail">
+      <td><span class="signal-dot${r.silent_risk?' hollow':''}" style="background:${hc}"></span></td>
+      <td class="acct">${r.name}</td>
+      <td class="num">${money(r.revenue)}</td>
+      <td class="num">${r.renewal_date} <span style="color:var(--faint)">(${renewalPhrase(n.days)})</span></td>
+      <td>${statePill(r)}</td>
+      <td class="num">${n.severity.toFixed(2)}</td>
+      <td><span class="lensdot" style="background:${LENS_COLOR[r.dominant_lens]}"></span>${r.dominant_lens}</td>
+      <td>${labelPill(r.health_label)}</td>
+      <td>${labelPill(r.sentiment_label)}</td>
+      <td>${labelPill(r.engagement_label)}</td>
+      <td class="num">${r.stakeholders_count}</td></tr>`;
+  }).join("");
+  document.getElementById("th-sev").onclick=()=>setSort("severity");
+  document.getElementById("th-renewal").onclick=()=>setSort("renewal");
+  [...document.querySelectorAll("#tbody tr")].forEach(tr=>{
+    const open=()=>{ const rec=DATA.find(d=>d.name===tr.getAttribute("data-name"));
+      openPanel({rec, severity:riskSeverity(rec), days:daysToRenewal(rec)}); };
+    tr.onclick=open;
+    tr.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } };
+  });
+}
+function setSort(key){
+  if(tableSort.key===key){ tableSort.dir*=-1; }
+  else { tableSort={key, dir:key==="severity"?-1:1}; }   /* severity desc, renewal asc as defaults */
+  renderTable();
+}
+
+/* ---- boot ---- */
+function boot(){
+  document.getElementById("asof-sub").textContent =
+    "As of " + TODAY.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  const acute = DATA.filter(r=>placementRadius(r) < 0.34).length;
+  const silent = DATA.filter(r=>r.silent_risk).length;
+  document.getElementById("count-note").textContent =
+    `${DATA.length} accounts · ${acute} acute · ${silent} emerging (silent)`;
+  drawChrome();
+  buildSweep();
+  drawBands(axisMode);
+  NODES=computeLayout(axisMode);
+  drawNodes();
+  renderLegend();
+}
+boot();
+</script>
+</body>
+</html>
