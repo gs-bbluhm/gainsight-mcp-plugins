@@ -407,7 +407,7 @@ A composition of verified pieces, in this order:
 
 **Answers:** "who's missing a decision maker", "where have we lost exec coverage", "which key contacts have gone cold". Two reports: role coverage per account, then the stale executives behind it.
 
-**Map the roles first.** Role names are org-configured. Pull the role list once (root `stakeholder_role`, `stakeholder_role.name` plus a child COUNT of `stakeholder` through `stakeholder.role`), decide which names mean Decision Maker, Executive Sponsor, Champion, and Departed, confirm with the user, and cache the mapping as `org.role_map`. A role with the literal name "Champion" can have zero people while the org's real champion role has hundreds.
+**Map the roles first.** Every org has three built-in roles that can't be renamed: "Decision Maker", "Champion", and "Executive Sponsor". Staircase's own signals (`customer.last_dm_touch`, the decision-maker and champion insights) count only those exact names. Orgs add their own roles too, including look-alikes. Pull the role list once (root `stakeholder_role`, `stakeholder_role.name` plus a child COUNT of `stakeholder` through `stakeholder.role`), map any look-alikes and the org's departed role to the concepts, confirm with the user, and cache the mapping as `org.role_map`. When a built-in role holds almost no one while a look-alike holds many, count both for coverage and say that Staircase's signals don't see the look-alike: retagging those people to the built-in role makes the signals work.
 
 **(a) Role coverage** (root `customer`, one row per account):
 ```json
