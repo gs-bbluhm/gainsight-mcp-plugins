@@ -23,13 +23,14 @@ This plugin reads and synthesizes. It never writes to a CRM.
 2. **Reuse the cache.** Read `~/.staircase-mcp/user-profile.md` if it exists. Reuse its scope unless the user asks to change it, or the cached field no longer appears in metadata.
 3. **Resolve scope, don't ask for it.** Role fields are the `customer.*` fields whose `referencedEntity` is `user` (always `customer.owner`, often org-specific CSM, renewal-owner, or specialist fields). Run the `scope.membership` recipe: one report, rooted at `user`, filtered to `current_user_id`, with one child COUNT per role field.
    - One field with a real count: that is the book. No question.
-   - Two or more: ask one question naming the fields and counts.
+   - Two or more: follow `portfolio_resolution` (the dominant field; OR fields that tie) and name the field used in the answer, so the user can redirect you.
    - None: not a book carrier. If people report to them (`user.manager`) and those people hold books, use team scope; otherwise portfolio scope. A manager whose reports carry no accounts (a product or enablement leader, say) gets portfolio, never an empty team book.
+   - Portfolio scope: ask once whether they're responsible for a slice (a product line, segment, or region). Save it as `scope.filter`, a condition every report adds, and `scope.revenue_field` when the slice has its own revenue field (for a product line, that product's revenue field of 1 or more). Scope to the person's responsibility by default; the whole org only when they have no slice or ask for it.
    - Never assume `customer.owner` is the CSM. Its role differs by org.
-4. **Learn the org's vocabulary.** From the same metadata call, cache the `lifecycle_event.type` options (event types are partly org-specific, and labels differ from ids) and the role-field list. Stakeholder roles are configured per org too: the first time an ask needs Decision Maker, Executive Sponsor, Champion, or Departed, pull the role list (`stakeholder.coverage` in report-recipes.md), propose a mapping, confirm it once, and cache it.
-5. **Write the profile** (`scope.method`, `scope.book_owner_field`, `scope.user_id`, `org.role_fields`, `org.lifecycle_types`, `org.role_map` once mapped) so the next skill skips steps 3 and 4.
+4. **Learn the org's vocabulary.** From the same metadata call, cache the `lifecycle_event.type` options (event types are partly org-specific, and labels differ from ids) and the role-field list. Stakeholder roles: Decision Maker, Champion, and Executive Sponsor are built in everywhere, and Staircase's signals count only those exact names; orgs add look-alikes and a departed role. The first time an ask needs roles, pull the role list (`stakeholder.coverage` in report-recipes.md), map look-alikes and the departed role, confirm once, and cache it.
+5. **Write the profile** (`scope.method`, `scope.book_owner_field`, `scope.user_id`, `scope.filter` and `scope.revenue_field` when set, `org.role_fields`, `org.lifecycle_types`, `org.role_map` once mapped) so the next skill skips steps 3 and 4.
 
-If `staircase_get_playbook` is available, read its `portfolio_resolution` topic first and prefer it where it differs.
+Read the `portfolio_resolution` playbook (`staircase_get_playbook`) alongside this contract and prefer it where it differs.
 
 ## Route every ask
 | The ask | The path |
@@ -56,7 +57,7 @@ Decompose compound asks into these primitives and assemble the answer yourself. 
 | `staircase_account_info` | One account's stored fields | Cross-account questions |
 | `staircase_analyze_account` | Narrative reasoning over one account's communications | Lists, exact counts |
 | `staircase_query` | Open-ended questions with evidence | Lists, rankings |
-| `staircase_get_playbook` (when present) | Server-authored recipes for listed topics; check first when the ask matches | |
+| `staircase_get_playbook` | Server-authored recipes; its description lists the current topics. Fetch every matching topic in one call before hand-building, and prefer it where it differs from these references | |
 
 ## The five patterns you'll use most
 1. **Context-complete reports, not thin lists.** Pick the recipe for the question; it names the columns that make the call-outs possible. Always select the name alongside any id, and label every column.

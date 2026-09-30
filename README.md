@@ -35,7 +35,7 @@ The plugin auto-adapts to your role. You run `gainsight-mcp-setup` once at insta
 
 | Plugin | What it is | Needs |
 |---|---|---|
-| **`staircase`** (2.0.0-beta.1) | Staircase AI account intelligence: book triage, meeting prep, risk check, renewal watchlist, risk radar, expansion scout, churn review, voice of customer, team views. Read-only | The Staircase AI connector only |
+| **`staircase`** (2.0.0-beta.2) | Staircase AI account intelligence: book triage, meeting prep, risk check, renewal watchlist, risk radar, expansion scout, churn review, voice of customer, team views. Read-only | The Staircase AI connector only |
 | **`gainsight-cs`** | Staircase and Gainsight CS together: book pulse, meeting processor, EBR scheduling, renewal radar, with approval-gated writes to Gainsight (CTAs, Timeline, Success Plans) | Both connectors |
 
 ## Staircase plugin: get started

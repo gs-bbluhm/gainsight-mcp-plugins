@@ -24,6 +24,7 @@ The canonical report for each core question. A recipe is not the shortest query 
 - Scope a book with `{"field":{"id":"customer.<book_owner_field>"},"operator":"In","values":[<user_id>]}`. The name form `customer.<book_owner_field>.full_name In ["<name>"]` also works when you only have names.
 - Scope a team in one filter by following the book field to its manager: `customer.<book_owner_field>.manager In [<manager_user_id>]`. The same path works from other roots (`stakeholder.customer.<book_owner_field>.manager`, `lifecycle_event.customer.<book_owner_field>.manager`).
 - Add `customer.status In ["Active"]` unless the ask is about churned accounts or one named account.
+- Add the profile's `scope.filter` (a portfolio slice such as a product line or region) to every recipe when it's set, and swap `customer.revenue_converted` for `scope.revenue_field` in revenue columns and totals. On multi-product accounts, account-level risk can concern a different product than the slice: read `lifecycle_event.products` on recent events before attributing it.
 - A Reference column returns a raw integer id. Always select the name alongside it (`customer.name`, or `<entity>.customer.name` on other roots) and give the id column an explicit label such as "Account id", or its header collides with the name column.
 - Label every column. Aggregation columns without distinct labels collide.
 - Paging: sort, then page with `pagination`, and put the entity id last in `sortBy` so pages neither drop nor repeat rows. Exception: sorting by `lifecycle_event.id` is ignored today, so for events narrow the window instead (anti-patterns.md R13).
@@ -55,7 +56,7 @@ The canonical report for each core question. A recipe is not the shortest query 
 
 **Reading it.**
 - One field with a real count: that field is the book. Don't ask.
-- Two or more fields with real counts: ask one question that names the fields and counts ("You're the owner on N accounts and the renewal owner on M. Which book is this about?").
+- Two or more fields with real counts: use the dominant field (OR the fields that tie), as `portfolio_resolution` does, and name the field and count in the answer ("Using your 30 accounts as CSM; you also hold 3 as renewal owner.") so the user can redirect.
 - No field: not a book carrier. Check their reports (`user.manager In [<user_id>]`) with the same child COUNTs: if the reports hold books, use team scope (via `team.rollup`); if they hold none, use portfolio scope. Never hand someone an empty team book.
 
 **Why it works:** the same child COUNT that powers rollups answers membership directly, so scope resolution needs no guessing and no label matching. Population counts alone never decide between two real role fields; the person's intent does.
@@ -406,7 +407,7 @@ A composition of verified pieces, in this order:
 
 **Answers:** "who's missing a decision maker", "where have we lost exec coverage", "which key contacts have gone cold". Two reports: role coverage per account, then the stale executives behind it.
 
-**Map the roles first.** Role names are org-configured. Pull the role list once (root `stakeholder_role`, `stakeholder_role.name` plus a child COUNT of `stakeholder` through `stakeholder.role`), decide which names mean Decision Maker, Executive Sponsor, Champion, and Departed, confirm with the user, and cache the mapping as `org.role_map`. A role with the literal name "Champion" can have zero people while the org's real champion role has hundreds.
+**Map the roles first.** Every org has three built-in roles that can't be renamed: "Decision Maker", "Champion", and "Executive Sponsor". Staircase's own signals (`customer.last_dm_touch`, the decision-maker and champion insights) count only those exact names. Orgs add their own roles too, including look-alikes. Pull the role list once (root `stakeholder_role`, `stakeholder_role.name` plus a child COUNT of `stakeholder` through `stakeholder.role`), map any look-alikes and the org's departed role to the concepts, confirm with the user, and cache the mapping as `org.role_map`. When a built-in role holds almost no one while a look-alike holds many, count both for coverage and say that Staircase's signals don't see the look-alike: retagging those people to the built-in role makes the signals work.
 
 **(a) Role coverage** (root `customer`, one row per account):
 ```json

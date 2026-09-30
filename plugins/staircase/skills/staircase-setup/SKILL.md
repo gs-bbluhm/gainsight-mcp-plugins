@@ -50,6 +50,9 @@ scope:
   book_owner_field: <the chosen role field id, or null>
   user_id: <whose book: usually the user>
   team_manager_id: <the user's id when method = team, else null>
+  filter: <a report condition for the user's slice of the portfolio, or null>
+  revenue_field: <the slice's own revenue field id, or null for customer.revenue_converted>
+  routing_role: <the role field a leader routes work by, when several carry books, else null>
 
 org:
   role_fields: [<customer.* fields whose referencedEntity is user>]
