@@ -56,7 +56,7 @@ The canonical report for each core question. A recipe is not the shortest query 
 
 **Reading it.**
 - One field with a real count: that field is the book. Don't ask.
-- Two or more fields with real counts: ask one question that names the fields and counts ("You're the owner on N accounts and the renewal owner on M. Which book is this about?").
+- Two or more fields with real counts: use the dominant field (OR the fields that tie), as `portfolio_resolution` does, and name the field and count in the answer ("Using your 30 accounts as CSM; you also hold 3 as renewal owner.") so the user can redirect.
 - No field: not a book carrier. Check their reports (`user.manager In [<user_id>]`) with the same child COUNTs: if the reports hold books, use team scope (via `team.rollup`); if they hold none, use portfolio scope. Never hand someone an empty team book.
 
 **Why it works:** the same child COUNT that powers rollups answers membership directly, so scope resolution needs no guessing and no label matching. Population counts alone never decide between two real role fields; the person's intent does.

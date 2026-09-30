@@ -23,7 +23,7 @@ This plugin reads and synthesizes. It never writes to a CRM.
 2. **Reuse the cache.** Read `~/.staircase-mcp/user-profile.md` if it exists. Reuse its scope unless the user asks to change it, or the cached field no longer appears in metadata.
 3. **Resolve scope, don't ask for it.** Role fields are the `customer.*` fields whose `referencedEntity` is `user` (always `customer.owner`, often org-specific CSM, renewal-owner, or specialist fields). Run the `scope.membership` recipe: one report, rooted at `user`, filtered to `current_user_id`, with one child COUNT per role field.
    - One field with a real count: that is the book. No question.
-   - Two or more: ask one question naming the fields and counts.
+   - Two or more: follow `portfolio_resolution` (the dominant field; OR fields that tie) and name the field used in the answer, so the user can redirect you.
    - None: not a book carrier. If people report to them (`user.manager`) and those people hold books, use team scope; otherwise portfolio scope. A manager whose reports carry no accounts (a product or enablement leader, say) gets portfolio, never an empty team book.
    - Portfolio scope: ask once whether they're responsible for a slice (a product line, segment, or region). Save it as `scope.filter`, a condition every report adds, and `scope.revenue_field` when the slice has its own revenue field (for a product line, that product's revenue field of 1 or more). Scope to the person's responsibility by default; the whole org only when they have no slice or ask for it.
    - Never assume `customer.owner` is the CSM. Its role differs by org.
