@@ -16,7 +16,7 @@
         "email": "bbluhm@gainsight.com"
       },
       "category": "customer-success",
-      "version": "2.0.0-beta.1",
+      "version": "2.0.0-beta.2",
       "source": "./plugins/staircase",
       "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
       "tags": [

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0-beta.2 (2026-09-29)
+- **Risk radar** scopes to the accounts you're responsible for and leads with the 90-day renewal slice (fresh vs chronic risk). Each account gets one of five churn states (saveable, notice given, partial, lost, verify) and a tag for which product the risk is about. Coverage leads with decision-maker touch, and the team view shows pooled users separately.
+- **Your slice of the portfolio:** if you don't carry a book, set the slice you own once (a product line, segment, or region) and every skill applies it.
+- **Stakeholder roles:** Decision Maker, Champion, and Executive Sponsor are built in, and Staircase's signals count only those exact names. Skills flag look-alike roles and suggest retagging.
+- **Server playbooks:** skills fetch matching `staircase_get_playbook` topics first.
+- **Two books:** when you hold accounts in two roles, skills use the main one and say which, instead of asking.
+
 ## 2.0.0-beta.1 (2026-09-25)
 
 First release of `staircase` as a standalone plugin in this marketplace. It supersedes the earlier desktop-upload builds (1.x). Beta: the foundation is final; the workflow skills are going through a live validation pass and may change before 2.0.0.
