@@ -1,0 +1,18 @@
+{
+  "name": "staircase-v3-leaders",
+  "version": "3.0.0-beta.1",
+  "description": "Beta. Staircase for CS managers: team load and exposure per person, the accounts worth leaning into, and what's renewing on the team, with the Slack to the account owner drafted. Never ranks people. Requires the Staircase AI connector.",
+  "author": {
+    "name": "Staircase AI"
+  },
+  "homepage": "https://github.com/gs-bbluhm/gainsight-mcp-plugins/tree/main/plugins/staircase-v3",
+  "repository": "https://github.com/gs-bbluhm/gainsight-mcp-plugins",
+  "license": "MIT",
+  "keywords": [
+    "staircase",
+    "manager",
+    "executive",
+    "team",
+    "retention"
+  ]
+}

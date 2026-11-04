@@ -1,0 +1,1344 @@
+<title>Action Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --bg:#F4F5FA;
+  --surface:#FFFFFF;
+  --surface-2:#EEF0F7;
+  --line:#D8DBE8;
+  --line-strong:#B9BED3;
+  --text:#1A1C2C;
+  --text-2:#4C516B;
+  --text-3:#666B85;
+  --accent:#4B53D4;
+  --accent-strong:#3A41B3;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#E8E9FB;
+  --accent-text:#3A41B3;
+  --focus:#4B53D4;
+  --red:#C8283A;
+  --red-soft:#FCEBED;
+  --red-ink:#8E1B2A;
+  --red-line:#EFB4BB;
+  --green:#1F7A4D;
+  --green-soft:#E4F4EB;
+  --green-ink:#145C39;
+  --green-line:#A9D8BF;
+  --blue:#1D6DB5;
+  --blue-soft:#E5F0FA;
+  --blue-ink:#14507F;
+  --blue-line:#A9CDEA;
+  --yellow:#B27A00;
+  --yellow-soft:#FBF2D8;
+  --yellow-ink:#6F4A00;
+  --yellow-line:#E6CD86;
+  --shadow:0 1px 2px rgba(26,28,44,.06),0 2px 8px rgba(26,28,44,.05);
+  --toast-bg:#1A1C2C;
+  --toast-ink:#FFFFFF;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1018;
+    --surface:#181A26;
+    --surface-2:#212435;
+    --line:#31354C;
+    --line-strong:#494E6B;
+    --text:#ECEEF8;
+    --text-2:#B4B8D0;
+    --text-3:#9196B2;
+    --accent:#5961E6;
+    --accent-strong:#6B73F0;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#23264A;
+    --accent-text:#A9AEFF;
+    --focus:#A9AEFF;
+    --red:#F0616F;
+    --red-soft:#3A1C24;
+    --red-ink:#FFB3BB;
+    --red-line:#6E2F3B;
+    --green:#4CC48A;
+    --green-soft:#173225;
+    --green-ink:#9BE3BF;
+    --green-line:#2C6A4A;
+    --blue:#5AA6EC;
+    --blue-soft:#14283E;
+    --blue-ink:#A8D2F7;
+    --blue-line:#2D5C8A;
+    --yellow:#E3B341;
+    --yellow-soft:#33290F;
+    --yellow-ink:#F1D58A;
+    --yellow-line:#6B5719;
+    --shadow:0 1px 2px rgba(0,0,0,.45);
+    --toast-bg:#ECEEF8;
+    --toast-ink:#12131C;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1018;
+  --surface:#181A26;
+  --surface-2:#212435;
+  --line:#31354C;
+  --line-strong:#494E6B;
+  --text:#ECEEF8;
+  --text-2:#B4B8D0;
+  --text-3:#9196B2;
+  --accent:#5961E6;
+  --accent-strong:#6B73F0;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#23264A;
+  --accent-text:#A9AEFF;
+  --focus:#A9AEFF;
+  --red:#F0616F;
+  --red-soft:#3A1C24;
+  --red-ink:#FFB3BB;
+  --red-line:#6E2F3B;
+  --green:#4CC48A;
+  --green-soft:#173225;
+  --green-ink:#9BE3BF;
+  --green-line:#2C6A4A;
+  --blue:#5AA6EC;
+  --blue-soft:#14283E;
+  --blue-ink:#A8D2F7;
+  --blue-line:#2D5C8A;
+  --yellow:#E3B341;
+  --yellow-soft:#33290F;
+  --yellow-ink:#F1D58A;
+  --yellow-line:#6B5719;
+  --shadow:0 1px 2px rgba(0,0,0,.45);
+  --toast-bg:#ECEEF8;
+  --toast-ink:#12131C;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 var(--font);font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+button,select{font:inherit;color:inherit}
+:where(button,select,summary):focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:880px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap.has-bar{padding-bottom:112px}
+.fine{margin:8px 0 0;font-size:12.5px;color:var(--text-3)}
+
+.hd{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-start;justify-content:space-between}
+.hd-main{display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1 1 360px}
+.mark{flex:none;width:38px;height:38px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;margin-top:2px}
+.mark svg{width:22px;height:22px;display:block}
+.eyebrow{margin:0 0 1px;font-size:12.5px;color:var(--text-3)}
+h1{font-size:22px;line-height:1.2;margin:0;font-weight:750}
+.glance{margin:4px 0 0;color:var(--text-2);font-size:14.5px}
+.glance .linkbtn,.mtg .linkbtn{display:inline;min-height:0;padding:1px 0;font-size:inherit}
+.glance .linkbtn{font-weight:650}
+.tip{display:flex;align-items:flex-start;gap:10px;margin:12px 0 0;padding:8px 10px;border:1px solid var(--blue-line);background:var(--blue-soft);color:var(--blue-ink);border-radius:8px;font-size:13.5px}
+.tip p{margin:0;flex:1}
+.tip .linkbtn{color:var(--blue-ink);flex:none}
+.mtg{margin:14px 0 0;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.mtg h2,.sec h2,.panel h4{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);font-weight:750}
+.mtg h2{margin-bottom:4px}
+.mtg ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.mtg li{display:grid;grid-template-columns:38px minmax(0,1fr);gap:0 6px;font-size:14px;color:var(--text-2);line-height:1.5}
+.mtg .day{font-weight:700;color:var(--text)}
+.mtg .w{color:var(--text-3)}
+.sec{margin:20px 0 10px;display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.sec h2{font-size:13px}
+
+.chip{display:inline-flex;align-items:center;max-width:100%;padding:1px 9px;border-radius:999px;font-size:12px;line-height:18px;font-weight:600;border:1px solid var(--line);background:var(--surface-2);color:var(--text-2)}
+.chip.cls{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent-text)}
+.chip.risk{background:var(--red-soft);border-color:var(--red-line);color:var(--red-ink)}
+.chip.dm{background:var(--red-soft);border-color:var(--red);color:var(--red-ink);font-weight:750}
+.chip.good{background:var(--green-soft);border-color:var(--green-line);color:var(--green-ink)}
+.chip.info{background:var(--blue-soft);border-color:var(--blue-line);color:var(--blue-ink)}
+.chip.avg{background:var(--yellow-soft);border-color:var(--yellow-line);color:var(--yellow-ink)}
+.chip.when{background:var(--surface);border-color:var(--line-strong)}
+.chip.sug{background:var(--surface);border:1px dashed var(--line-strong)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 14px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.sm{min-height:30px;padding:3px 10px;font-size:13px;font-weight:500}
+.linkbtn{background:none;border:0;padding:3px 2px;min-height:26px;color:var(--accent-text);font-size:13px;text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+.qb{min-height:30px;padding:3px 9px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer}
+.qb:hover{background:var(--surface-2);color:var(--text)}
+.qb[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-text)}
+.snzw{position:relative;display:inline-flex;align-items:center}
+.snz{appearance:none;-webkit-appearance:none;min-height:30px;padding:3px 26px 3px 10px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;cursor:pointer}
+.snz option{background:var(--surface);color:var(--text)}
+.snzw::after{content:"";position:absolute;right:10px;top:50%;width:6px;height:6px;margin-top:-5px;border-right:2px solid var(--text-2);border-bottom:2px solid var(--text-2);transform:rotate(45deg);pointer-events:none}
+.tog::after{content:"";display:inline-block;width:6px;height:6px;margin:-3px 0 0 8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .15s}
+.tog[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:12px 14px;margin:0 0 10px;scroll-margin-top:12px}
+.card.sev{border-left:4px solid var(--red);padding-left:11px}
+.card:focus{outline:none}
+.c-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.rank{flex:none;min-width:24px;height:24px;padding:0 6px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);display:inline-grid;place-items:center;font-weight:750;font-size:13px}
+.acct{font-size:16.5px;line-height:1.25;margin:0;font-weight:750;overflow-wrap:anywhere;min-width:0}
+.acct a,.nm a{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
+.acct a:hover,.acct a:focus-visible,.nm a:hover,.nm a:focus-visible{border-bottom-color:currentColor}
+.ext{font-size:.8em;font-weight:600;color:var(--accent-text);margin-left:3px}
+.btn.why-btn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-text);border-color:var(--accent-soft)}
+.tags{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.why{margin:5px 0 0;font-size:14.5px;line-height:1.4}
+.pv{display:flex;align-items:center;gap:8px;margin-top:7px;min-width:0}
+.pv-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:var(--text-3);padding-left:8px;border-left:3px solid var(--line-strong)}
+.pv .linkbtn{flex:none}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px}
+.quiet{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;margin-left:auto}
+.done-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:6px;color:var(--text-2);font-size:14px}
+.card.is-done{background:var(--surface-2);box-shadow:none}
+.card.is-done .acct{text-decoration:line-through;color:var(--text-3)}
+.panel{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-strong)}
+.sect-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.draft{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:10px 12px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}
+.kv dt{color:var(--text-3)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.body{white-space:pre-wrap;font:14px/1.5 var(--font);margin:10px 0 0;overflow-wrap:anywhere}
+.why-p{margin:8px 0 0;font-size:14px}
+.ctx{margin:8px 0 0;padding-left:18px;display:grid;gap:5px;font-size:14px;line-height:1.45}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ev{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:12px}
+.ev-l{font-size:12.5px;font-weight:700;color:var(--text-2)}
+.q{margin:4px 0 0;padding:2px 0 2px 10px;border-left:3px solid var(--line-strong);font-size:14px;overflow-wrap:anywhere}
+.q::before{content:"\201C"}
+.q::after{content:"\201D"}
+.ev-item.customer .q{border-left-color:var(--blue)}
+
+.rows{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.6fr) auto;gap:4px 14px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.ra{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;min-width:0;font-weight:700;font-size:14px;line-height:1.3}
+.ra .rank{min-width:20px;height:20px;padding:0 5px;font-size:12px}
+.ra .nm{overflow-wrap:anywhere}
+.rm{font-size:13px;color:var(--text-2);min-width:0}
+.rb{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:2px 10px}
+.rb .linkbtn{min-height:24px;padding:2px}
+.more-foot{margin-top:8px}
+.strips{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-top:20px}
+.strip{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;min-width:0}
+.strip summary{cursor:pointer}
+.mini{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:3px;font-size:13px;color:var(--text-2)}
+.foot{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+.foot summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--text-2);padding:4px 0}
+.foot dl{display:grid;grid-template-columns:minmax(80px,120px) minmax(0,1fr);gap:8px 14px;margin:10px 0 0;font-size:13.5px}
+.foot dt{color:var(--text-3)}
+.foot dd{margin:0;overflow-wrap:anywhere}
+.foot ul{margin:0;padding-left:18px}
+.cmds{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;align-items:center}
+.verb{font:12px/1 var(--mono);color:var(--text-2);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:4px 6px;white-space:nowrap}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line-strong);box-shadow:var(--shadow);padding:10px max(16px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:880px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;font-size:14px;font-weight:600}
+.toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;max-width:min(520px,calc(100vw - 32px));background:var(--toast-bg);color:var(--toast-ink);border-radius:10px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow)}
+.has-bar .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.toast .verb{margin-left:4px}
+.err{padding:16px;border:1px solid var(--red-line);background:var(--red-soft);color:var(--red-ink);border-radius:10px}
+
+@media (max-width:720px){
+  .row{grid-template-columns:minmax(0,1fr);gap:0;padding:5px 12px}
+  .ra{flex-wrap:nowrap}
+  .ra .nm,.ra .chip,.rm{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ra .chip{flex-shrink:4}
+  .rm{line-height:1.3}
+  .rb{justify-content:flex-start}
+}
+@media (max-width:560px){
+  .wrap{padding-block:16px 48px}
+  h1{font-size:20px}
+  .card{padding:9px 12px}
+  .card.sev{padding-left:9px}
+  .c-head{gap:2px 8px}
+  .acct{font-size:16px}
+  .why{font-size:14px;margin-top:3px;line-height:1.38}
+  .pv{margin-top:4px}
+  .pv .linkbtn{min-height:22px}
+  .ctl{margin-top:6px;gap:3px}
+  .pri{flex:1 1 0;min-width:0}
+  .why-btn{flex:none}
+  .quiet{margin-left:0;width:100%;justify-content:space-between}
+}
+@media (pointer:coarse){
+  .btn{min-height:44px}
+  .btn.sm{min-height:40px}
+  .qb,.snz{min-height:36px}
+  .linkbtn,.pv .linkbtn,.rb .linkbtn{min-height:32px}
+  .glance .linkbtn,.mtg .linkbtn{min-height:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+</style>
+
+<div class="wrap">
+  <div class="sr-only" id="live" role="status" aria-live="polite"></div>
+  <div id="app"><p class="fine">Loading the board.</p></div>
+  <noscript><p class="err">This board needs JavaScript to draw itself.</p></noscript>
+  <div class="toast" id="toast" aria-hidden="true" hidden></div>
+</div>
+
+<!--
+BOARD DATA SCHEMA. Claude rewrites only the JSON block below, once per run. Every field is optional unless starred.
+Write the less-than sign as \u003c in strings. Use \n for line breaks in drafts. No raw double quotes inside strings.
+Visible strings use references/plain-words.md: no ids, scores or field names.
+
+board: {id* (unique per run, include the time; clears are remembered under it), title* (the date), as_of*, headline (default "N things need you today"),
+        start_with{account, why (10 words or fewer)}, next_up (empty day), scope_line, window_line, seen_line, blind_line, rank_rule (one plain sentence), counts{active}}
+pinned[] then items[]: each row is
+  {n* (display order, top to bottom through the groups), account*,
+   trigger_class* (Waiting on you | Recap owed | Prep | New risk | Ongoing risk | Contact change | Quiet | Renewal | Ready to grow),
+   when_group* (Do today | Prep for Wed | This week | This week: closures to hand off; groups show in order of first appearance),
+   dont_miss: true on a settled closure (pinned[] rows are always Don't miss), dont_miss_reason (default "Renews soon at high risk"),
+   why_now* (12 words or fewer: the card line), account_url (the account's Staircase page, from customer.url; https only),
+   context[] (Why this: 2 to 4 lines on where things stand, the history, who is involved, what has been tried, what happens next.
+              Each line adds what the card line does not say; never restate why_now or the headline. Lines that repeat it are dropped),
+   meets (else matched from the meetings by account name),
+   stakes[{label, tone: risk | good | info | avg | plain}] (a risk tone gives the card its red edge; the chips show in Why this only when context[] is empty),
+   action{kind: email | slack | meeting | escalation | brief | record_fix, recipient, verb (default "draft n"; "brief Account Name" for brief),
+          draft{to, subject, body} or {channel_or_person, text}; first_line optional},
+   also_offer{label, verb}, suggestion: true when no thread names the next step (shown as My idea),
+   evidence[{id (audit only, never shown), date (YYYY-MM-DD), speaker_side: customer | us,
+             speaker_name, speaker_role (the title from the stakeholder record; name alone when none; never guessed; "You" for the user), quote}]}
+more[]: {n, account, account_url, trigger_class, why_now (about 45 characters), suggestion, action{kind, label (link text, "Draft intro email")}}
+strips: {meetings_this_week{items[{day, time, account, card}]}, hidden_by_ledger[{account, reason}], record_check[{account, note}]}
+
+Verbs the page sends (each works typed by hand): draft 2 | draft 2b | draft 1, 2, 4 | draft all | done 2 | snooze 2 3d (1d, 3d, 1w) | not mine 2 | why 2 | brief Account Name | more | undo 2
+-->
+<script id="board-data" type="application/json">
+{
+  "board": {
+    "id": "csm-today-2026-11-03T0702MT",
+    "title": "Tuesday, 3 Nov",
+    "as_of": "7:02 AM MT",
+    "start_with": {
+      "account": "Halvorsen Freight",
+      "why": "Renews in 38 days, high risk, sponsor silent nine days."
+    },
+    "scope_line": "Your 28 active accounts where you're the CSM",
+    "window_line": "Emails, calls and Slack from 20 Oct to 3 Nov. Renewals within 120 days.",
+    "seen_line": "I read 28 accounts and 61 threads.",
+    "blind_line": "Emails Staircase can't see. Risk is scored on only 5 of your 28 accounts, so a quiet account isn't a safe one.",
+    "rank_rule": "Ranked by what's at stake, who's waiting and for how long, and how quiet it is.",
+    "counts": {
+      "active": 28
+    }
+  },
+  "pinned": [
+    {
+      "n": 1,
+      "account": "Halvorsen Freight",
+      "account_url": "https://app.staircase.ai/customers/40112/overview",
+      "trigger_class": "Renewal",
+      "when_group": "Do today",
+      "why_now": "High risk, renews in 38 days, sponsor silent for nine days.",
+      "context": [
+        "Live on scheduling at the main depot since March; the second depot never moved over, so its team is back on spreadsheets.",
+        "You asked Joel Pruitt (VP Operations, the sponsor) for 20 minutes on 29 Oct. No reply, and he skipped the October check-in.",
+        "Marcus Bell owns the commercial side; no renewal quote has gone out yet.",
+        "Next: a note from our leadership this week, with the usage and value summary in hand."
+      ],
+      "stakes": [
+        {
+          "label": "High risk (5 of 5)",
+          "tone": "risk"
+        },
+        {
+          "label": "Renews in 38 days",
+          "tone": "plain"
+        },
+        {
+          "label": "Sponsor quiet 9 days",
+          "tone": "plain"
+        }
+      ],
+      "action": {
+        "kind": "escalation",
+        "recipient": "Renata Cho, Marcus Bell",
+        "draft": {
+          "channel_or_person": "Renata Cho and Marcus Bell (group DM)",
+          "text": "Renata, Marcus: can one of you take a note to Halvorsen Freight's leadership this week? They renew in 38 days at high risk. Joel Pruitt, our sponsor, hasn't answered my note from last Thursday, and their ops lead says the second depot never moved onto the scheduling module. Marcus, where does the commercial side stand? I'll pull the usage and value summary together first."
+        }
+      },
+      "also_offer": {
+        "label": "Pull a renewal brief first",
+        "verb": "brief Halvorsen Freight"
+      },
+      "evidence": [
+        {
+          "id": "E-3318",
+          "date": "2026-10-22",
+          "speaker_side": "customer",
+          "speaker_name": "Lena Duarte",
+          "speaker_role": "Operations Lead",
+          "quote": "The second depot never got onto the scheduling module, so my team is back on spreadsheets."
+        },
+        {
+          "id": "E-3377",
+          "date": "2026-10-29",
+          "speaker_side": "us",
+          "speaker_name": "You",
+          "quote": "Joel, can we find 20 minutes this week before the renewal conversation starts?"
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "n": 2,
+      "account": "Meridian Health Partners",
+      "account_url": "https://app.staircase.ai/customers/40377/overview",
+      "trigger_class": "Waiting on you",
+      "when_group": "Do today",
+      "why_now": "Procurement asked how pricing works if they expand; unanswered six days.",
+      "context": [
+        "Gwen Okafor (Procurement Lead) is asking about adding the Northfield hospital group in the spring: an expansion question, not a complaint.",
+        "Per-seat pricing sits with Tomas Reyes, the account executive, so the answer has to come from him.",
+        "Renews in 72 days, so a clear answer now sets up the expansion inside the renewal."
+      ],
+      "stakes": [
+        {
+          "label": "Waiting 6 days",
+          "tone": "plain"
+        },
+        {
+          "label": "Renews in 72 days",
+          "tone": "plain"
+        },
+        {
+          "label": "Low risk",
+          "tone": "good"
+        }
+      ],
+      "action": {
+        "kind": "slack",
+        "recipient": "Tomas Reyes",
+        "draft": {
+          "channel_or_person": "Tomas Reyes",
+          "text": "Can I tell Meridian's procurement lead how per-seat pricing works if they add a second hospital group? Gwen Okafor asked six days ago, and I don't want to guess on commercial terms. Tell me what I can say, or take the reply yourself. A short steer today lets me send her a 'working on it' note."
+        }
+      },
+      "also_offer": {
+        "label": "Send Gwen a quick 'working on it' reply",
+        "verb": "draft 2b"
+      },
+      "evidence": [
+        {
+          "id": "E-2208",
+          "date": "2026-10-28",
+          "speaker_side": "customer",
+          "speaker_name": "Gwen Okafor",
+          "speaker_role": "Procurement Lead",
+          "quote": "If we bring the Northfield group on in the spring, does our per-seat rate change at renewal?"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "account": "Wexcombe Insurance Group",
+      "account_url": "https://app.staircase.ai/customers/40981/overview",
+      "trigger_class": "Recap owed",
+      "when_group": "Do today",
+      "why_now": "Yesterday's call left three open asks; no recap sent yet.",
+      "context": [
+        "Monday's call with Priya Nambiar (Director of Claims Operations) and two regional admins covered the claims-team rollout.",
+        "Open asks: training options for three regional admins, an owner for data export, and Eli's filters walkthrough.",
+        "The data export question has come up twice since September with no owner named.",
+        "They set 1 Dec for the rollout; a recap today keeps that date."
+      ],
+      "stakes": [
+        {
+          "label": "Call was yesterday",
+          "tone": "plain"
+        },
+        {
+          "label": "3 open asks",
+          "tone": "plain"
+        }
+      ],
+      "action": {
+        "kind": "email",
+        "recipient": "Priya Nambiar",
+        "draft": {
+          "to": "Priya Nambiar \u003cpriya.nambiar@wexcombe.example>",
+          "subject": "Recap from Monday and what happens next",
+          "body": "Hi Priya,\n\nThanks for the time yesterday. A quick recap so we're all on the same list:\n\n1. Admin training: I'll send session options for your three regional admins.\n2. Data export: I'm confirming who owns this on our side and will name them next.\n3. Claims team filters: Eli will send you the walkthrough he mentioned.\n\nIf I missed anything, tell me and I'll fix it.\n\nBest,\nJordan"
+        }
+      },
+      "also_offer": {
+        "label": "Nudge Eli about the walkthrough on Slack",
+        "verb": "draft 3b"
+      },
+      "evidence": [
+        {
+          "id": "T-5530",
+          "date": "2026-11-02",
+          "speaker_side": "customer",
+          "speaker_name": "Priya Nambiar",
+          "speaker_role": "Director of Claims Operations",
+          "quote": "Can you send the admin training options, and who owns the data export question?"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "account": "Cedarline Medical Supply",
+      "account_url": "https://app.staircase.ai/customers/41206/overview",
+      "trigger_class": "Prep",
+      "when_group": "Prep for Thu",
+      "why_now": "Thursday call is the first with their new VP of Operations.",
+      "context": [
+        "Marguerite Voss joined as VP Operations in September; Alan Kopec (Systems Administrator, our champion) set up Thursday's call.",
+        "Live in 4 of 6 warehouses; the other two wait on a floor-layout change on their side.",
+        "Leadership asked for a view of time saved per order before their next budget cycle."
+      ],
+      "stakes": [
+        {
+          "label": "New executive contact",
+          "tone": "info"
+        },
+        {
+          "label": "Health average",
+          "tone": "avg"
+        }
+      ],
+      "action": {
+        "kind": "brief",
+        "verb": "brief Cedarline Medical Supply",
+        "draft": {
+          "subject": "Prep: Cedarline Medical Supply, Thursday call",
+          "body": "Who is on: Marguerite Voss (VP Operations, started in September, first call with us) and Alan Kopec (admin, our champion).\n\nWhere things stand: live in 4 of 6 warehouses, steady daily use. The other two wait on a floor-layout change on their side. Leadership wants a view of time saved per order.\n\nWhat Marguerite likely wants: proof this delivers on the case made before she arrived.\n\nAsk: what she hears from the floor, which outcome she wants by year end, what holds back the last two warehouses. Watch for any sign she is reviewing vendors."
+        }
+      },
+      "also_offer": {
+        "label": "Draft a short agenda to send ahead",
+        "verb": "draft 4b"
+      },
+      "evidence": [
+        {
+          "id": "C-0914",
+          "date": "2026-10-30",
+          "speaker_side": "customer",
+          "speaker_name": "Alan Kopec",
+          "speaker_role": "Systems Administrator",
+          "quote": "Marguerite wants to join Thursday. She is new and wants to understand what we pay for."
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "account": "Ashgrove Capital Partners",
+      "account_url": "https://app.staircase.ai/customers/41533/overview",
+      "trigger_class": "New risk",
+      "when_group": "This week",
+      "why_now": "Champion Dev Malhotra leaves in two weeks; no successor named.",
+      "context": [
+        "Dev Malhotra (Head of Investor Reporting) ran the rollout and is the contact who writes to us most.",
+        "No other contact has replied to us this quarter, so the account leans on Dev alone.",
+        "Sam Lindgren, the account executive, has a separate thread with their finance team.",
+        "Renews in 96 days; whoever takes over from Dev will own that decision."
+      ],
+      "stakes": [
+        {
+          "label": "High risk",
+          "tone": "risk"
+        },
+        {
+          "label": "Champion leaving",
+          "tone": "risk"
+        },
+        {
+          "label": "Renews in 96 days",
+          "tone": "plain"
+        }
+      ],
+      "action": {
+        "kind": "slack",
+        "recipient": "#acct-ashgrove",
+        "draft": {
+          "channel_or_person": "#acct-ashgrove (account team)",
+          "text": "Who reaches out to whoever takes over at Ashgrove, and when? Dev Malhotra, our champion, said yesterday his last day is the 17th and nobody's been named. I'll ask Dev this week for an intro to his successor. Sam, can you check whether your finance contact knows who it'll be? Let's agree who contacts whom first."
+        }
+      },
+      "also_offer": {
+        "label": "Draft a note to Dev asking for the intro",
+        "verb": "draft 5b"
+      },
+      "evidence": [
+        {
+          "id": "E-7102",
+          "date": "2026-11-02",
+          "speaker_side": "customer",
+          "speaker_name": "Dev Malhotra",
+          "speaker_role": "Head of Investor Reporting",
+          "quote": "Heads up, my last day is the 17th. Nobody has been named to pick this up yet."
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "account": "Wrenfield Veterinary Group",
+      "account_url": "https://app.staircase.ai/customers/41870/overview",
+      "trigger_class": "Quiet",
+      "when_group": "This week",
+      "why_now": "Live five weeks, quiet for 19 days, early results not shared.",
+      "context": [
+        "Went live on 29 Sep. Noor Haddad (Practice Operations Manager) said on 15 Oct she would bring in the other clinic managers.",
+        "Our 20 Oct check-in has no reply, and there is no meeting on the calendar.",
+        "Nothing is wrong yet; a short results note gives Noor something to share with the other managers."
+      ],
+      "stakes": [
+        {
+          "label": "Quiet 19 days",
+          "tone": "plain"
+        },
+        {
+          "label": "Low risk",
+          "tone": "good"
+        }
+      ],
+      "action": {
+        "kind": "email",
+        "recipient": "Noor Haddad",
+        "draft": {
+          "to": "Noor Haddad \u003cnoor.haddad@wrenfield.example>",
+          "subject": "What your team has already done in five weeks",
+          "body": "Hi Noor,\n\nYour clinics have logged 212 intake requests since go-live, and about two thirds were routed without anyone touching them. That's triage time your front desks got back.\n\nOnly two of your six clinics are submitting so far. I can put together a short walkthrough for the other four managers if it helps.\n\nWhat would be most useful from me right now?\n\nBest,\nJordan"
+        }
+      },
+      "also_offer": {
+        "label": "Book a 20 minute check-in instead",
+        "verb": "draft 6b"
+      },
+      "evidence": [
+        {
+          "id": "E-6120",
+          "date": "2026-10-15",
+          "speaker_side": "customer",
+          "speaker_name": "Noor Haddad",
+          "speaker_role": "Practice Operations Manager",
+          "quote": "We are live! I will loop in the rest of the clinic managers next week."
+        }
+      ],
+      "suggestion": true
+    },
+    {
+      "n": 7,
+      "account": "Larchmont Logistics",
+      "account_url": "https://app.staircase.ai/customers/42015/overview",
+      "trigger_class": "Renewal",
+      "when_group": "This week: closures to hand off",
+      "dont_miss": true,
+      "dont_miss_reason": "Closing soon; the notice is in writing",
+      "why_now": "Gave written notice on 21 Oct; the contract ends 31 Dec.",
+      "context": [
+        "Hadley Brandt (COO) gave notice after their parent company standardized on another vendor.",
+        "No complaint in the thread: the decision came from the parent company, not the team using it.",
+        "Renata Cho runs close-outs, and nothing is handed over yet.",
+        "On the way out, the team that used it may give a reference or a quote."
+      ],
+      "stakes": [
+        {
+          "label": "High risk (5 of 5)",
+          "tone": "risk"
+        },
+        {
+          "label": "Ends in 58 days",
+          "tone": "plain"
+        }
+      ],
+      "action": {
+        "kind": "slack",
+        "recipient": "Renata Cho",
+        "draft": {
+          "channel_or_person": "Renata Cho",
+          "text": "Can someone on the close-out team take over Larchmont Logistics? Hadley Brandt gave written notice on 21 Oct and the contract ends 31 Dec, so this isn't a save. I'll stay their contact until the handoff."
+        }
+      },
+      "evidence": [
+        {
+          "id": "E-4402",
+          "date": "2026-10-21",
+          "speaker_side": "customer",
+          "speaker_name": "Hadley Brandt",
+          "speaker_role": "COO",
+          "quote": "We have decided not to renew when the contract ends on 31 December."
+        }
+      ]
+    }
+  ],
+  "more": [
+    {
+      "n": 8,
+      "account": "Marlowe Payments",
+      "account_url": "https://app.staircase.ai/customers/42300/overview",
+      "trigger_class": "Contact change",
+      "why_now": "A new CFO appears on the latest invoice thread.",
+      "action": {
+        "kind": "email",
+        "label": "Draft intro email"
+      }
+    },
+    {
+      "n": 9,
+      "account": "Bluefin Field Services",
+      "account_url": "https://app.staircase.ai/customers/42337/overview",
+      "trigger_class": "Ready to grow",
+      "why_now": "Asked about a second team on yesterday's call.",
+      "action": {
+        "kind": "email",
+        "label": "Draft follow-up email"
+      }
+    },
+    {
+      "n": 10,
+      "account": "Dunmore Controls",
+      "account_url": "https://app.staircase.ai/customers/42374/overview",
+      "trigger_class": "Ongoing risk",
+      "why_now": "Support ticket open 11 days; owner changed twice.",
+      "action": {
+        "kind": "slack",
+        "label": "Draft Slack to Support lead"
+      }
+    },
+    {
+      "n": 11,
+      "account": "Aldercrest Mutual",
+      "account_url": "https://app.staircase.ai/customers/42411/overview",
+      "trigger_class": "CRM may be out of date",
+      "why_now": "Success plan owner is a departed user.",
+      "action": {
+        "kind": "record_fix",
+        "label": "Draft CRM fix"
+      }
+    }
+  ],
+  "strips": {
+    "meetings_this_week": {
+      "items": [
+        {
+          "day": "Wed",
+          "time": "10:00 AM",
+          "account": "Bluefin Field Services"
+        },
+        {
+          "day": "Thu",
+          "time": "1:30 PM",
+          "account": "Cedarline Medical Supply"
+        },
+        {
+          "day": "Thu",
+          "time": "3:00 PM",
+          "account": "Summit Row Architects"
+        },
+        {
+          "day": "Fri",
+          "time": "9:30 AM",
+          "account": "Marlowe Payments"
+        }
+      ]
+    },
+    "hidden_by_ledger": [
+      {
+        "account": "Linden Tech Services",
+        "reason": "You marked it closing on 27 Oct"
+      }
+    ]
+  }
+}
+</script>
+<script>
+(function () {
+  'use strict';
+
+  var TAG_TONE = { 'New risk': 'risk', 'Ongoing risk': 'risk' };
+  var SNOOZE = [['1d', '1 day'], ['3d', '3 days'], ['1w', '1 week']];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var KINDS = {
+    email: { head: 'Email draft', copy: 'Copy message', save: 'Save to Gmail drafts', where: 'in Gmail', who: 1 },
+    slack: { head: 'Slack message', copy: 'Copy message', save: 'Save to Slack drafts', where: 'in Slack', who: 1 },
+    meeting: { head: 'Invite', copy: 'Copy invite text', save: 'Propose times', where: 'into a Calendar invite' },
+    brief: { head: 'Prep brief', copy: 'Copy brief', save: 'Open brief in chat', where: 'into your meeting notes' },
+    record_fix: { head: 'CRM fix note', copy: 'Copy fix note', save: 'Draft the CRM fix', where: 'into the CRM note' }
+  };
+  KINDS.escalation = KINDS.slack;
+  var GREETING = /^(hi|hello|hey|dear)\b[^,.!?]{0,40}[,:]?$/i;
+  var TIPKEY = 'actionboard:tip';
+  var ASK = 'Paste it into the chat and Claude will prepare it.';
+  var NOCOPY = 'Copy did not work here. ';
+
+  function S(v) { return v == null ? '' : String(v); }
+  function A(v) { return Array.isArray(v) ? v : []; }
+  function O(v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+  function pl(n, one, many) { return n === 1 ? one : many; }
+  function kind(k) { return KINDS[k] || { head: 'Draft', copy: 'Copy message', save: 'Save draft', where: 'where you need it' }; }
+  function fmtDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(S(s));
+    if (!m || !MONTHS[Number(m[2]) - 1]) return S(s);
+    return Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1];
+  }
+  function add(el, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { add(el, x); }); return; }
+    el.appendChild(typeof c === 'object' ? c : document.createTextNode(String(c)));
+  }
+  function h(tag, attrs) {
+    var el = document.createElement(tag), k, v;
+    if (attrs) {
+      for (k in attrs) {
+        v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.indexOf('on') === 0 && typeof v === 'function') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      }
+    }
+    for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+
+  var app = document.getElementById('app');
+  var toastEl = document.getElementById('toast');
+  var liveEl = document.getElementById('live');
+  var wrapEl = document.querySelector('.wrap');
+
+  /* ---------- data ---------- */
+  var data = null;
+  try { data = JSON.parse(document.getElementById('board-data').textContent); } catch (e) { data = null; }
+  if (!data || typeof data !== 'object') {
+    app.textContent = '';
+    app.appendChild(h('p', { class: 'err', text: 'The board data could not be read. Ask Claude to build the board again.' }));
+    return;
+  }
+  var board = O(data.board), more = A(data.more), strips = O(data.strips), counts = O(board.counts);
+  var boardId = S(board.id) || (S(board.title) + '|' + S(board.as_of));
+  var rows = [], meetings = [];
+  A(data.pinned).forEach(function (x) { rows.push({ it: O(x), pin: true }); });
+  A(data.items).forEach(function (x) { rows.push({ it: O(x), pin: false }); });
+  A(O(strips.meetings_this_week).items).forEach(function (m) {
+    m = O(m);
+    var day = S(m.day), time = S(m.time), mm = !day && m.when ? /^(\S+)\s+(.*)$/.exec(S(m.when)) : null;
+    if (mm) { day = mm[1]; time = mm[2]; }
+    meetings.push({ day: day, time: time, account: S(m.account), card: S(m.card) });
+  });
+  function same(a, b) { return S(a).toLowerCase() === S(b).toLowerCase(); }
+  function meetsFor(acct, it) {
+    if (it.meets) return S(it.meets);
+    for (var i = 0; i < meetings.length; i++) { if (same(meetings[i].account, acct)) return (meetings[i].day + ' ' + meetings[i].time).trim(); }
+    return '';
+  }
+  function cardFor(m) {
+    if (m.card) return m.card;
+    for (var i = 0; i < rows.length; i++) { if (same(rows[i].it.account, m.account)) return S(rows[i].it.n); }
+    return '';
+  }
+
+  /* ---------- remembered clears and tip (storage may be blocked) ---------- */
+  var STORE = 'actionboard:' + boardId;
+  var marks = {}, tipGone = false;
+  try {
+    var rawMarks = window.localStorage.getItem(STORE);
+    if (rawMarks) { var parsed = JSON.parse(rawMarks); if (parsed && typeof parsed === 'object') marks = parsed; }
+  } catch (e) { marks = {}; }
+  try { tipGone = window.localStorage.getItem(TIPKEY) === '1'; } catch (e) { tipGone = false; }
+  function saveMarks() { try { window.localStorage.setItem(STORE, JSON.stringify(marks)); } catch (e) { /* storage blocked: page-only memory */ } }
+
+  /* ---------- transport: prompt bridge, MCP Apps message, or clipboard ---------- */
+  var T = { mode: 'pending', ready: null };
+  var waiting = {}, seq = 0;
+  (function detect() {
+    try { if (typeof window.sendPrompt === 'function') { T.mode = 'prompt'; return; } } catch (e) { /* ignore */ }
+    var framed = false;
+    try { framed = !!window.parent && window.parent !== window; } catch (e) { framed = true; }
+    if (!framed) { T.mode = 'copy'; return; }
+    T.ready = new Promise(function (resolve) {
+      var id = 'ab-init-' + Date.now(), done = false, timer;
+      function finish(m) { if (done) return; done = true; clearTimeout(timer); resolve(m); }
+      window.addEventListener('message', function (ev) {
+        try {
+          var d = ev.data;
+          if (!d || d.jsonrpc !== '2.0' || ev.source !== window.parent) return;
+          if (d.id === id && !done) {
+            if (d.result !== undefined && !d.error) {
+              try { window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} }, '*'); } catch (e2) { /* ignore */ }
+              finish('mcp');
+            } else { finish('copy'); }
+            return;
+          }
+          if (d.id != null && waiting[d.id]) waiting[d.id](d);
+        } catch (e3) { /* ignore */ }
+      });
+      timer = setTimeout(function () { finish('copy'); }, 400);
+      try {
+        window.parent.postMessage({ jsonrpc: '2.0', id: id, method: 'ui/initialize', params: { protocolVersion: '2026-01-26', appInfo: { name: 'staircase-action-board', version: '3.0.0' }, appCapabilities: {} } }, '*');
+      } catch (e4) { finish('copy'); }
+    });
+    T.ready.then(function (m) { T.mode = m; paintMode(); });
+  })();
+
+  function canSend() { return T.mode === 'prompt' || T.mode === 'mcp'; }
+  function withMode(fn) {
+    if (T.mode === 'pending' && T.ready) { T.ready.then(function () { fn(); }); return; }
+    fn();
+  }
+  function mcpSend(text) {
+    return new Promise(function (resolve, reject) {
+      var id = 'ab-msg-' + (++seq);
+      var timer = setTimeout(function () { delete waiting[id]; reject(new Error('no reply')); }, 4000);
+      waiting[id] = function (msg) { clearTimeout(timer); delete waiting[id]; if (msg.error) reject(msg.error); else resolve(); };
+      try {
+        window.parent.postMessage({ jsonrpc: '2.0', id: id, method: 'ui/message', params: { role: 'user', content: [{ type: 'text', text: text }] } }, '*');
+      } catch (e) { clearTimeout(timer); delete waiting[id]; reject(e); }
+    });
+  }
+  /* cb(true) when the verb reached Claude; cb(false) when the page can only copy it */
+  function sendVerb(verb, cb) {
+    withMode(function () {
+      if (T.mode === 'prompt') {
+        var ok = false;
+        try { window.sendPrompt(verb); ok = true; } catch (e) { ok = false; }
+        cb(ok);
+      } else if (T.mode === 'mcp') {
+        mcpSend(verb).then(function () { cb(true); }, function () { cb(false); });
+      } else { cb(false); }
+    });
+  }
+
+  function selectNode(node) {
+    try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) { /* ignore */ }
+  }
+  function legacyCopy(text) {
+    var ok = false, ta = null;
+    try {
+      ta = h('textarea', { class: 'sr-only', readonly: true, 'aria-hidden': 'true', tabindex: '-1' });
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+    } catch (e) { ok = false; }
+    if (ta && ta.parentNode) ta.parentNode.removeChild(ta);
+    return ok;
+  }
+  function copyText(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacyCopy(text); });
+      }
+    } catch (e) { /* fall through */ }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  var toastTimer;
+  function toast(msg, sel) {
+    clearTimeout(toastTimer);
+    liveEl.textContent = '';
+    liveEl.textContent = msg + (sel ? ' ' + sel : '');
+    toastEl.textContent = '';
+    toastEl.appendChild(h('span', { text: msg }));
+    var code = sel ? h('code', { class: 'verb', text: sel }) : null;
+    if (code) toastEl.appendChild(code);
+    toastEl.hidden = false;
+    if (code) selectNode(code);
+    toastTimer = setTimeout(function () { toastEl.hidden = true; }, sel ? 10000 : 4200);
+  }
+  /* copy text, say where it went; on failure run onFail, or show the text selected */
+  function copyTo(text, okMsg, onFail, onOk) {
+    copyText(text).then(function (ok) {
+      if (ok) { toast(okMsg); if (onOk) onOk(); }
+      else if (onFail) onFail();
+      else toast(NOCOPY + 'It is selected, so press Ctrl+C or Cmd+C, then paste it into the chat: ', text);
+    });
+  }
+  function askClaude(verb, hint) {
+    sendVerb(verb, function (ok) { if (ok) toast('Sent to chat: ' + verb); else copyTo(verb, 'Copied: ' + verb + '. ' + hint); });
+  }
+
+  /* ---------- drafts ---------- */
+  function isSlack(d) { return !!(d.channel_or_person || (d.text && !d.body)); }
+  function draftBody(d) { return isSlack(d) ? S(d.text) : S(d.body); }
+  function firstLine(d) {
+    if (d.first_line) return S(d.first_line);
+    var lines = draftBody(d).split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean), i;
+    for (i = 0; i < lines.length; i++) { if (!GREETING.test(lines[i])) return lines[i]; }
+    return lines[0] || '';
+  }
+  function pasteMsg(k, act, d) {
+    var rc = S(act.recipient);
+    return 'Copied. Paste it ' + k.where + (k.who && rc ? (rc.charAt(0) === '#' ? ' in ' : ' to ') + rc : '') + '.' +
+      (act.kind === 'email' && d.subject ? ' The subject line is under Full draft.' : '');
+  }
+
+  var nDrafts = rows.filter(function (r) { return !!draftBody(O(O(r.it.action).draft)); }).length;
+  function allDraftsText() {
+    var out = [];
+    rows.forEach(function (r) {
+      var it = r.it, act = O(it.action), d = O(act.draft), body = draftBody(d), rc = S(act.recipient);
+      if (!body) return;
+      var lines = ['Draft ' + S(it.n) + ': ' + kind(act.kind).head + (rc ? ' to ' + rc : ' for ' + S(it.account))];
+      if (d.subject && act.kind !== 'brief') lines.push('Subject: ' + S(d.subject));
+      out.push(lines.concat('', body).join('\n'));
+    });
+    return out.join('\n\n---\n\n');
+  }
+  function runAll() {
+    withMode(function () {
+      function copyAll() {
+        copyTo(allDraftsText(), 'Copied all ' + nDrafts + ' drafts, each with a short header. Paste them where you will work through them.',
+          function () { toast(NOCOPY + 'Open Full draft on a card and copy from there.'); });
+      }
+      if (canSend()) {
+        sendVerb('draft all', function (ok) { if (ok) toast('Asked Claude to save all ' + nDrafts + ' drafts to your Slack and Gmail drafts.'); else copyAll(); });
+      } else { copyAll(); }
+    });
+  }
+
+  /* ---------- shared state ---------- */
+  var registry = {}, openOrder = [], primaries = [];
+  var barEl, barText, barBtn, tipEl, allBtn;
+
+  function pendingKeys() {
+    return Object.keys(marks).filter(function (k) {
+      var m = O(marks[k]), r = registry[k];
+      return r && m.k && m.a === r.acct && (m.s === 'local' || m.s === 'copied');
+    }).sort(function (a, b) { return Number(a) - Number(b); });
+  }
+  function markVerb(k, m) { return m.k === 'done' ? 'done ' + k : (m.k === 'snooze' ? 'snooze ' + k + ' ' + m.d : 'not mine ' + k); }
+  function updateBar() {
+    var ks = pendingKeys(), fresh = ks.filter(function (k) { return O(marks[k]).s === 'local'; }).length;
+    barEl.hidden = !ks.length;
+    wrapEl.classList.toggle('has-bar', ks.length > 0);
+    if (!ks.length) return;
+    var n = ks.length, w = pl(n, 'change', 'changes'), it = pl(n, 'it', 'them');
+    barText.textContent = fresh ? n + ' ' + w + ' not saved to Claude yet' : n + ' ' + w + ' copied. Paste ' + it + ' into the chat so Claude keeps ' + it + '.';
+    barBtn.textContent = fresh ? 'Copy all' : 'Copy again';
+  }
+  function copyChanges() {
+    var ks = pendingKeys();
+    if (!ks.length) return;
+    copyTo(ks.map(function (k) { return markVerb(k, marks[k]); }).join('; '), 'Copied. Paste it into the chat so Claude remembers.', null, function () {
+      ks.forEach(function (k) { marks[k].s = 'copied'; });
+      saveMarks();
+      updateBar();
+    });
+  }
+  function paintMode() {
+    primaries.forEach(function (p) { p(); });
+    if (allBtn) allBtn.title = canSend() ? 'Asks Claude to save every draft.' : 'Copies every draft, with a short header on each.';
+    if (tipEl) tipEl.hidden = !(T.mode === 'copy' && !tipGone);
+  }
+  function jumpTo(key) {
+    var api = registry[key];
+    if (!api) return;
+    api.el.scrollIntoView({ block: 'start' });
+    try { api.el.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- pieces ---------- */
+  function chip(label, tone) { return h('span', { class: 'chip ' + (/^(risk|good|info|avg)$/.test(tone) ? tone : ''), text: S(label) }); }
+  function myIdea() { return h('span', { class: 'chip sug', text: 'My idea', title: 'No email or call names this next step. This is my suggestion.' }); }
+
+  function draftPanel(it, key) {
+    var act = O(it.action), k = kind(act.kind), d = O(act.draft), body = draftBody(d), also = O(it.also_offer);
+    if (!body) return null;
+    var kv = h('dl', { class: 'kv' });
+    function row(a, v) { if (v) { kv.appendChild(h('dt', { text: a })); kv.appendChild(h('dd', { text: v })); } }
+    if (isSlack(d)) row('Slack to', S(d.channel_or_person)); else { row('To', S(d.to)); row('Subject', S(d.subject)); }
+    var pre = h('pre', { class: 'body', text: body });
+    var panel = h('section', { class: 'panel', id: 'draft-' + key, 'aria-label': 'Full draft', hidden: true },
+      h('div', { class: 'sect-h' }, h('h4', { text: k.head }),
+        h('button', { class: 'btn sm', type: 'button', text: k.copy, onclick: function () {
+          copyTo(body, pasteMsg(k, act, d), function () { selectNode(pre); toast(NOCOPY + 'The text is selected, so press Ctrl+C or Cmd+C.'); });
+        } })),
+      h('div', { class: 'draft' }, kv, pre),
+      h('p', { class: 'fine', text: 'Nothing is sent from this page.' }),
+      also.label && also.verb ? h('button', { class: 'linkbtn', type: 'button', text: 'Also: ' + S(also.label),
+        onclick: function () { askClaude(S(also.verb), ASK); } }) : null);
+    panel.pre = pre;
+    return panel;
+  }
+
+  function norm(v) { return S(v).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function safeUrl(u) { u = S(u); return /^https:\/\/[^\s"'<>]+$/.test(u) ? u : ''; }
+  function acctLink(acct, url) {
+    if (!url) return acct;
+    return h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', title: 'Open ' + acct + ' in Staircase', 'aria-label': acct + ', open in Staircase' },
+      acct, h('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' }));
+  }
+  function speaker(e, us, acct) {
+    var n = S(e.speaker_name), r = S(e.speaker_role);
+    if (n) return r ? n + ', ' + r : n;
+    return us ? 'You' : 'Someone at ' + acct;
+  }
+
+  function whyPanel(it, key, dm) {
+    var reason = S(it.dont_miss_reason) || 'Renews soon at high risk', lead = norm(it.why_now), acct = S(it.account);
+    // Why this adds to the card line, never repeats it.
+    var ctx = A(it.context).map(S).filter(function (c) { var n = norm(c); return n && n !== lead && lead.indexOf(n) < 0; });
+    var older = !ctx.length, sentence = older ? S(it.why_this) : '';
+    var stakes = older ? A(it.stakes) : [], ev = A(it.evidence);
+    return h('section', { class: 'panel', id: 'why-' + key, 'aria-label': 'Why this', hidden: true },
+      h('h4', { text: 'Why this' }),
+      dm ? h('p', { class: 'why-p' }, h('strong', { text: "Don't miss: " }), reason.charAt(0).toLowerCase() + reason.slice(1) + '.') : null,
+      ctx.length ? h('ul', { class: 'ctx' }, ctx.map(function (c) { return h('li', { text: c }); })) : null,
+      sentence ? h('p', { class: 'why-p', text: sentence }) : null,
+      stakes.length ? h('div', { class: 'chips' }, stakes.map(function (x) { x = O(x); return chip(x.label, x.tone); })) : null,
+      ev.length ? h('ol', { class: 'ev' }, ev.map(function (e) {
+        e = O(e);
+        var us = e.speaker_side === 'us', when = fmtDate(e.date);
+        return h('li', { class: 'ev-item ' + (us ? 'us' : 'customer'), 'data-evidence-id': S(e.id) },
+          h('div', { class: 'ev-l', text: speaker(e, us, acct) + (when ? ' · ' + when : '') }),
+          h('blockquote', { class: 'q', text: S(e.quote) }));
+      })) : null);
+  }
+
+  /* ---------- card ---------- */
+  function buildCard(it, pin) {
+    var key = S(it.n), acct = S(it.account), act = O(it.action), d = O(act.draft), k = kind(act.kind);
+    var verb = S(act.verb) || (act.kind === 'brief' ? 'brief ' + acct : 'draft ' + key);
+    var tag = S(it.trigger_class), meets = meetsFor(acct, it), text = draftBody(d);
+    var dm = pin || !!it.dont_miss;
+    var sev = dm || A(it.stakes).some(function (s) { return O(s).tone === 'risk'; });
+    var api = { acct: acct, openDraft: false, openWhy: false };
+
+    var head = h('div', { class: 'c-head' },
+      h('span', { class: 'rank', text: key, 'aria-label': 'Item ' + key }),
+      h('h3', { class: 'acct' }, acctLink(acct, safeUrl(it.account_url))),
+      h('span', { class: 'tags' },
+        tag ? h('span', { class: 'chip ' + (TAG_TONE[tag] || 'cls'), text: tag }) : null,
+        dm ? h('span', { class: 'chip dm', text: "Don't miss", title: S(it.dont_miss_reason) || 'Renews soon at high risk' }) : null,
+        meets ? h('span', { class: 'chip when', text: 'Meets ' + meets }) : null,
+        it.suggestion ? myIdea() : null));
+    var why = h('p', { class: 'why', text: S(it.why_now) });
+    var fullBtn = text ? h('button', { class: 'linkbtn tog', type: 'button', text: 'Full draft', 'aria-expanded': 'false', 'aria-controls': 'draft-' + key,
+      onclick: function () { setDraft(!api.openDraft); } }) : null;
+    var pv = text ? h('div', { class: 'pv' }, h('span', { class: 'pv-t', text: firstLine(d) }), fullBtn) : null;
+
+    var primary = h('button', { class: 'btn primary pri', type: 'button', onclick: function () {
+      withMode(function () {
+        function copyIt() {
+          if (!text) { copyTo(verb, 'Copied: ' + verb + '. ' + ASK); return; }
+          copyTo(text, pasteMsg(k, act, d), function () { setDraft(true); selectNode(dPanel.pre); toast(NOCOPY + 'The draft is open and selected, so press Ctrl+C or Cmd+C.'); });
+        }
+        if (canSend()) sendVerb(verb, function (ok) { if (ok) toast('Sent to chat: ' + verb); else copyIt(); });
+        else copyIt();
+      });
+    } });
+    function paintPrimary() { primary.textContent = !text ? 'Ask Claude to draft this' : (canSend() ? k.save : k.copy); }
+    paintPrimary();
+    primaries.push(paintPrimary);
+
+    var snz = h('select', { class: 'snz', id: 'snz-' + key, 'aria-label': 'Snooze ' + acct, onchange: function () {
+      var s = SNOOZE.filter(function (x) { return x[0] === snz.value; })[0];
+      snz.value = '';
+      if (s) clear({ k: 'snooze', d: s[0], l: s[1] }, 'snooze ' + key + ' ' + s[0]);
+    } }, h('option', { value: '', text: 'Snooze' }), SNOOZE.map(function (s) { return h('option', { value: s[0], text: s[1] }); }));
+    var whyBtn = h('button', { class: 'btn why-btn', type: 'button', text: 'Why this', 'aria-expanded': 'false', 'aria-controls': 'why-' + key, onclick: function () { setWhy(!api.openWhy); } });
+    var ctl = h('div', { class: 'ctl' }, primary, whyBtn,
+      h('div', { class: 'quiet', role: 'group', 'aria-label': 'Clear this item' },
+        h('button', { class: 'qb', type: 'button', text: 'Done', onclick: function () { clear({ k: 'done' }, 'done ' + key); } }),
+        h('span', { class: 'snzw' }, snz),
+        h('button', { class: 'qb', type: 'button', text: 'Not mine', onclick: function () { clear({ k: 'notmine' }, 'not mine ' + key); } })));
+
+    var dPanel = draftPanel(it, key), wPanel = whyPanel(it, key, dm);
+    var doneLabel = h('span');
+    var undoBtn = h('button', { class: 'linkbtn', type: 'button', text: 'Undo', onclick: function () { undo(); } });
+    var doneRow = h('div', { class: 'done-row', hidden: true }, doneLabel, undoBtn);
+    var card = h('article', { class: 'card' + (sev ? ' sev' : ''), id: 'card-' + key, tabindex: '-1', 'aria-label': acct }, head, why, pv, ctl, doneRow, dPanel, wPanel);
+    api.el = card;
+
+    function doneText(m) {
+      var w = m.k === 'done' ? 'Done' : (m.k === 'snooze' ? 'Snoozed' : 'Marked not yours'), f = m.k === 'snooze' ? ' for ' + S(m.l) : '';
+      if (m.s === 'sent') return w + f + ". Sent to Claude, so it stays off tomorrow's list.";
+      if (m.s === 'sending') return w + f + '. Sending to Claude.';
+      return w + ' here' + f + (m.k === 'snooze' ? '; paste to keep it hidden.' : "; paste to keep it off tomorrow's list.");
+    }
+    function apply() {
+      var m = O(marks[key]), done = !!m.k && m.a === acct;
+      card.classList.toggle('is-done', done);
+      why.hidden = ctl.hidden = done;
+      if (pv) pv.hidden = done;
+      if (dPanel) dPanel.hidden = done || !api.openDraft;
+      wPanel.hidden = done || !api.openWhy;
+      doneRow.hidden = !done;
+      if (done) doneLabel.textContent = doneText(m);
+    }
+    function touch() {
+      openOrder = openOrder.filter(function (x) { return x !== api; });
+      if (api.openDraft || api.openWhy) openOrder.push(api);
+    }
+    function setDraft(v) {
+      if (!fullBtn) return;
+      api.openDraft = v;
+      fullBtn.setAttribute('aria-expanded', v ? 'true' : 'false');
+      fullBtn.textContent = v ? 'Hide draft' : 'Full draft';
+      apply(); touch();
+    }
+    function setWhy(v) {
+      api.openWhy = v;
+      whyBtn.setAttribute('aria-expanded', v ? 'true' : 'false');
+      apply(); touch();
+    }
+    function clear(mk, v) {
+      withMode(function () {
+        var send = canSend();
+        marks[key] = { k: mk.k, d: mk.d || '', l: mk.l || '', a: acct, s: send ? 'sending' : 'local' };
+        saveMarks(); apply(); updateBar();
+        liveEl.textContent = doneLabel.textContent;
+        undoBtn.focus();
+        if (!send) return;
+        sendVerb(v, function (ok) {
+          var m = O(marks[key]);
+          if (m.k !== mk.k) return;
+          m.s = ok ? 'sent' : 'local';
+          saveMarks(); apply(); updateBar();
+        });
+      });
+    }
+    function undo() {
+      var m = O(marks[key]);
+      delete marks[key];
+      saveMarks(); apply(); updateBar();
+      primary.focus();
+      if (m.s === 'sent') askClaude('undo ' + key, 'Paste it into the chat to put it back.');
+      else if (m.s === 'copied') toast('Back on the list here. If you already pasted it, tell Claude: ', 'undo ' + key);
+    }
+    api.collapse = function () { var f = api.openWhy ? whyBtn : (fullBtn || whyBtn); setDraft(false); setWhy(false); return f; };
+    registry[key] = api;
+    var saved = O(marks[key]);
+    if (saved.k && saved.a !== acct) delete marks[key];
+    else if (saved.s === 'sending') saved.s = 'local';
+    apply();
+    return card;
+  }
+
+  /* ---------- also worth a look ---------- */
+  function buildRow(it) {
+    var key = S(it.n), acct = S(it.account), act = O(it.action), tag = S(it.trigger_class), meets = meetsFor(acct, it);
+    var verb = S(act.verb) || (act.kind === 'brief' ? 'brief ' + acct : 'draft ' + key), label = S(act.label) || 'Draft this';
+    return h('li', { class: 'row' },
+      h('div', { class: 'ra' }, h('span', { class: 'rank', text: key, 'aria-label': 'Item ' + key }), h('span', { class: 'nm' }, acctLink(acct, safeUrl(it.account_url))),
+        tag ? h('span', { class: 'chip ' + (TAG_TONE[tag] || 'cls'), text: tag }) : null, it.suggestion ? myIdea() : null),
+      h('div', { class: 'rm', text: S(it.why_now), title: S(it.why_now) }),
+      h('div', { class: 'rb' }, meets ? h('span', { class: 'chip when', text: 'Meets ' + meets }) : null,
+        h('button', { class: 'linkbtn', type: 'button', text: label, 'aria-label': label + ' for ' + acct, onclick: function () { askClaude(verb, ASK); } })));
+  }
+
+  /* ---------- meetings, strips, footer ---------- */
+  function buildMeetings() {
+    if (!meetings.length) return null;
+    var days = [], idx = {};
+    meetings.forEach(function (m) {
+      if (idx['d:' + m.day] == null) { idx['d:' + m.day] = days.length; days.push({ day: m.day, list: [] }); }
+      days[idx['d:' + m.day]].list.push(m);
+    });
+    return h('section', { class: 'mtg', 'aria-label': 'Meetings this week' }, h('h2', { text: 'Meetings this week' }),
+      h('ul', null, days.map(function (g) {
+        return h('li', null, h('span', { class: 'day', text: g.day }),
+          h('span', null, g.list.map(function (m, i) {
+            var card = cardFor(m);
+            return h('span', null, m.time ? m.time + ' ' : '',
+              card ? h('button', { class: 'linkbtn', type: 'button', text: m.account, onclick: function () { jumpTo(card); } }) : m.account,
+              card ? h('span', { class: 'w', text: ', item ' + card }) : null,
+              i < g.list.length - 1 ? '  ·  ' : '');
+          })));
+      })));
+  }
+  function buildStrips() {
+    var hid = A(strips.hidden_by_ledger), rc = A(strips.record_check);
+    function list(a, f) { return h('ul', { class: 'mini' }, a.map(function (x) { x = O(x); return h('li', null, h('strong', { text: S(x.account) }), f(x) ? ': ' + f(x) : ''); })); }
+    var wrap = h('div', { class: 'strips' },
+      hid.length ? h('details', { class: 'strip' }, h('summary', { text: 'Hidden because you cleared ' + pl(hid.length, 'it', 'them') + ': ' + hid.length + ' ' + pl(hid.length, 'account', 'accounts') }),
+        list(hid, function (x) { return S(x.reason); })) : null,
+      rc.length ? h('section', { class: 'strip' }, h('strong', { text: 'CRM may be out of date' }), list(rc, function (x) { return S(x.note); })) : null);
+    return wrap.childNodes.length ? wrap : null;
+  }
+  function buildFoot() {
+    function dl(dt, dd) { return dd ? [h('dt', { text: dt }), h('dd', null, dd)] : null; }
+    var cmds = [
+      ['draft 2', 'Save item 2 to your drafts'], ['draft 2b', 'The second option'], ['draft 1, 2, 4', 'Several at once'],
+      ['draft all', 'Every draft'], ['done 2', 'Clear it'], ['snooze 2 3d', 'Hide it for 1d, 3d or 1w'], ['not mine 2', 'It belongs to someone else'],
+      ['why 2', 'The reasoning'], ['brief Account Name', 'Prep brief'], ['more', 'Show more'], ['undo 2', 'Put it back']
+    ];
+    return h('details', { class: 'foot' },
+      h('summary', { text: "How I built this and what I couldn't see" }),
+      h('dl', null, dl('Accounts', S(board.scope_line)), dl('Dates', S(board.window_line)), dl('What I read', S(board.seen_line)),
+        dl('Order', S(board.rank_rule)), dl("What I couldn't see", S(board.blind_line)),
+        dl('Commands', h('div', { class: 'cmds' }, cmds.map(function (c) { return [h('code', { class: 'verb', text: c[0] }), h('span', { text: c[1] })]; })))));
+  }
+
+  /* ---------- page ---------- */
+  function render() {
+    app.textContent = '';
+    var groups = [], idx = {}, n = rows.length;
+    rows.forEach(function (r) {
+      var label = S(r.it.when_group) || 'Do today';
+      if (idx['g:' + label] == null) { idx['g:' + label] = groups.length; groups.push({ label: label, rows: [] }); }
+      groups[idx['g:' + label]].rows.push(r);
+    });
+    var first = n ? groups[0].rows[0].it : {}, st = O(board.start_with), sKey = '';
+    var sAcct = S(st.account) || S(first.account), sWhy = (S(st.why) || S(first.why_now)).replace(/[.\s]+$/, '');
+    rows.forEach(function (r) { if (!sKey && same(r.it.account, sAcct)) sKey = S(r.it.n); });
+    var meta = [counts.active != null ? counts.active + ' accounts' : '', board.as_of ? 'data as of ' + S(board.as_of) : ''].filter(Boolean).join(' · ');
+    var glance = h('p', { class: 'glance' });
+    if (n) {
+      glance.appendChild(document.createTextNode('Start with '));
+      glance.appendChild(h('button', { class: 'linkbtn', type: 'button', text: sAcct, onclick: function () { jumpTo(sKey); } }));
+      glance.appendChild(document.createTextNode(': ' + sWhy + '. ' + meta));
+    } else {
+      var nx = S(board.next_up) || (meetings.length ? meetings[0].account + ', ' + (meetings[0].day + ' ' + meetings[0].time).trim() : '');
+      glance.textContent = (nx ? 'Next up: ' + nx + '. ' : '') + (counts.active != null ? 'I checked ' + counts.active + ' accounts' + (board.as_of ? ' · ' : '.') : '') + (board.as_of ? 'data as of ' + S(board.as_of) : '');
+    }
+    var mark = h('div', { class: 'mark', 'aria-hidden': 'true' });
+    mark.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path d="M3 20h5v-5h5v-5h5V5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    allBtn = nDrafts ? h('button', { class: 'btn', type: 'button', text: 'All ' + nDrafts + ' ' + pl(nDrafts, 'draft', 'drafts'), onclick: runAll }) : null;
+    app.appendChild(h('header', { class: 'hd' },
+      h('div', { class: 'hd-main' }, mark, h('div', null, board.title ? h('p', { class: 'eyebrow', text: S(board.title) }) : null,
+        h('h1', { text: S(board.headline) || (n ? n + ' ' + pl(n, 'thing needs', 'things need') + ' you today' : 'Nothing needs you today.') }), glance)),
+      allBtn ? h('div', null, allBtn) : null));
+
+    tipEl = h('div', { class: 'tip', role: 'note', hidden: true },
+      h('p', { text: 'Buttons here copy text. Paste messages into Slack or Gmail, and paste changes into the chat so Claude remembers them.' }),
+      h('button', { class: 'linkbtn', type: 'button', text: 'Got it', 'aria-label': 'Dismiss this tip', onclick: function () {
+        tipGone = true; tipEl.hidden = true;
+        try { window.localStorage.setItem(TIPKEY, '1'); } catch (e) { /* storage blocked */ }
+      } }));
+    app.appendChild(tipEl);
+    var mt = buildMeetings();
+    if (mt) app.appendChild(mt);
+
+    groups.forEach(function (g) {
+      app.appendChild(h('div', { class: 'sec' }, h('h2', { text: g.label })));
+      g.rows.forEach(function (r) { app.appendChild(buildCard(r.it, r.pin)); });
+    });
+    if (more.length) {
+      app.appendChild(h('div', { class: 'sec' }, h('h2', { text: 'Also worth a look' })));
+      app.appendChild(h('ul', { class: 'rows' }, more.map(function (it) { return buildRow(O(it)); })));
+      app.appendChild(h('div', { class: 'more-foot' }, h('button', { class: 'btn sm', type: 'button', text: 'Show more', onclick: function () { askClaude('more', 'Paste it into the chat.'); } })));
+    }
+    var sp = buildStrips();
+    if (sp) app.appendChild(sp);
+    app.appendChild(buildFoot());
+    paintMode();
+    updateBar();
+  }
+
+  barText = h('span');
+  barBtn = h('button', { class: 'btn primary', type: 'button', onclick: copyChanges });
+  barEl = h('div', { class: 'bar', hidden: true, role: 'region', 'aria-label': 'Changes not saved to Claude yet' }, h('div', { class: 'bar-in' }, barText, barBtn));
+  wrapEl.appendChild(barEl);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    toastEl.hidden = true;
+    var active = document.activeElement, target = null, i;
+    for (i = openOrder.length - 1; i >= 0; i--) { if (openOrder[i].el.contains(active)) { target = openOrder[i]; break; } }
+    if (!target && openOrder.length) target = openOrder[openOrder.length - 1];
+    if (target) { var f = target.collapse(); if (f) f.focus(); e.preventDefault(); }
+  });
+
+  render();
+})();
+</script>

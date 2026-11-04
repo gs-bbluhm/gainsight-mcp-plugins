@@ -72,6 +72,24 @@
         "fun",
         "chef-gordon"
       ]
+    },
+    {
+      "name": "staircase-v3",
+      "source": "./plugins/staircase-v3/core",
+      "version": "3.0.0-beta.1",
+      "description": "Beta. Staircase AI for Claude: honest answers and reports from your customer conversations, plus the shared rules every Staircase pack uses (scope, evidence, action priority, action types, trust, delivery, company profile). Add the pack for your team for its weekly workflows. Requires the Staircase AI connector."
+    },
+    {
+      "name": "staircase-v3-account-team",
+      "source": "./plugins/staircase-v3/account-team",
+      "version": "3.0.0-beta.1",
+      "description": "Beta. Staircase for CSMs and account managers: what needs you today, which renewals need work, who has gone quiet, each with the email, Slack ask or meeting already drafted. Requires the Staircase AI connector."
+    },
+    {
+      "name": "staircase-v3-leaders",
+      "source": "./plugins/staircase-v3/leaders",
+      "version": "3.0.0-beta.1",
+      "description": "Beta. Staircase for CS managers: team load and exposure per person, the accounts worth leaning into, and what's renewing on the team, with the Slack to the account owner drafted. Never ranks people. Requires the Staircase AI connector."
     }
   ]
 }
