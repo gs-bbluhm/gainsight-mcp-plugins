@@ -8,6 +8,13 @@ Usage:
   rank_renewals.py renewals  --today D [--horizon N] [--lens csm] [--override O.csv] [--other OTHER.csv] [--totals] R1 R2 R3
   rank_renewals.py expansion --today D [--override O.csv] OPPS.csv R1 R2 R3
   rank_renewals.py combined  --today D [--window 120] [--horizon N] --me "<full name>" [--override O.csv] OPPS.csv R1 R2 R3
+  rank_renewals.py ledger    --today D --fp FP --state done|dismissed|snoozed|lifted --reason R [--until D] [--scope-id N]
+
+Every ranking mode reads the ledger (--ledger, default ~/.staircase/ledger.jsonl; --scope-id is the user id whose
+book is ranked). Fingerprints: <account_id>|renewal_plan|<renewal_date> and <account_id>|expansion_plan|<lane>.
+A clear covers the account's renewal (or expansion) row until something newer happens: an event in the pulls dated
+after it, the renewal crossing 180, 120, 90, 60 or 30 days, or the snooze ending. "Not mine" on the account (<id>|*|*) hides
+it until lifted. do_not_contact (<id>|*|*) keeps renewal rows as internal actions and drops expansion rows.
 
 CSV headers are the column labels SKILL.md sections 4 and 11 give (account_id first); files join on
 account_id. D is the user's local date. In combined mode the R pulls cover the whole book and R3
@@ -29,6 +36,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import os
 import sys
 
 GAPS = ("engagement", "buyer", "risk", "stakeholder")
@@ -438,6 +446,105 @@ def combined(book, opps, today, window, horizon, me, ov):
     return allx, info + notes
 
 
+# ---------------------------------------------------------------- ledger (action-priority.md, Ledger)
+
+# A clear written by either skill on these triggers covers the matching row here, at account level.
+FAMILY = {"renewal": {"renewal_plan", "renewal_checkpoint", "renewal_decision"},
+          "expansion": {"expansion_plan", "expansion_ready"}}
+EVIDENCE = ("ev_churn_risk", "ev_churn_notice", "ev_personnel", "ev_very_negative", "ev_commercial", "ev_renewal")
+
+
+def load_ledger(path, today, scope):
+    active = []
+    if not path or not os.path.exists(path):
+        return active
+    with open(path, encoding="utf-8") as f:
+        for ln in f:
+            try:
+                e = json.loads(ln)
+            except ValueError:
+                continue
+            if scope and e.get("scope") and str(e["scope"]) != str(scope):
+                continue
+            if e.get("state") == "lifted":
+                active = [x for x in active if not (x.get("fp") == e.get("fp") and
+                                                    (not e.get("reason") or x.get("reason") == e["reason"]))]
+                continue
+            if e.get("state") == "snoozed" and e.get("until") and e["until"] < today.isoformat():
+                continue
+            active.append(e)
+    return active
+
+
+def fingerprint(x):
+    if x["kind"] == "expansion":
+        return f"{x['account_id']}|expansion_plan|{x.get('lane') or 'ladder'}"
+    return f"{x['account_id']}|renewal_plan|{x.get('renewal_date') or 'none'}"
+
+
+def newer(r, at, today):
+    """Something happened after the clear: an event in the pulls, or the renewal crossed a checkpoint."""
+    if any((d := day(r.get(c))) and d > at for c in EVIDENCE):
+        return True
+    rd = day(r.get("renewal_date"))
+    if rd:
+        then, now = (rd - at).days, (rd - today).days
+        return any(then > t >= now for t in (180, 120, 90, 60, 30, 0))
+    return False
+
+
+def apply_ledger(res, raw, entries, today):
+    """Hide cleared rows (pins too: only the ledger removes a pin); mark do-not-contact accounts."""
+    dnc = {e.get("fp", "").split("|")[0] for e in entries if e.get("reason") == "do_not_contact"}
+    hidden = []
+    for x in res:
+        if x["kind"] not in ("renewal", "expansion"):
+            continue
+        aid, fp = x["account_id"], fingerprint(x)
+        x["fp"] = fp
+        fam = FAMILY[x["kind"]]
+        hit = None
+        for e in entries:
+            if e.get("reason") == "do_not_contact" or e.get("state") == "linked":
+                continue
+            ea, et, ek = (e.get("fp", "").split("|") + ["", ""])[:3]
+            if ea != aid:
+                continue
+            if et == "*":
+                hit = e
+                break
+            # a row's fingerprint stays the same from event to event, so even an exact match holds
+            # only until something newer happens
+            at = day(e.get("at", ""))
+            if (e.get("fp") == fp or et in fam) and at and not newer(raw.get(aid, {}), at, today):
+                hit = e
+        if hit:
+            hidden.append(f"{x['account']} ({hit.get('state')}, {hit.get('reason', '')}, {str(hit.get('at', ''))[:10]}"
+                          + (f", until {hit['until']}" if hit.get("until") else "") + ")")
+            x.update(priority=0, rank="Strip: hidden by your clears", pin="")
+            if "lane" in x:
+                x["lane"] = "Out"
+        elif aid in dnc:
+            if x["kind"] == "expansion":
+                x.update(priority=0, rank="Strip: do not contact", lane="Out" if "lane" in x else x.get("lane", ""))
+            x["note"] = (x.get("note", "") + "; " if x.get("note") else "") + \
+                "do not contact: internal actions only, no customer draft"
+    return hidden
+
+
+def cmd_ledger(a):
+    line = {"fp": a.fp, "state": a.state, "reason": a.reason,
+            "at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
+    if a.until:
+        line["until"] = a.until
+    if a.scope_id:
+        line["scope"] = str(a.scope_id)
+    os.makedirs(os.path.dirname(os.path.abspath(a.ledger)), exist_ok=True)
+    with open(a.ledger, "a", encoding="utf-8") as f:
+        f.write(json.dumps(line) + "\n")
+    print("ledger +1:", json.dumps(line))
+
+
 def table(res, cols):
     lines = ["| # | " + " | ".join(cols) + " |", "|" + "---|" * (len(cols) + 1)]
     for i, x in enumerate(res, 1):
@@ -449,8 +556,14 @@ def table(res, cols):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("mode", choices=["renewals", "expansion", "combined"])
+    ap.add_argument("mode", choices=["renewals", "expansion", "combined", "ledger"])
     ap.add_argument("--today", required=True, help="the user's local date, YYYY-MM-DD")
+    ap.add_argument("--ledger", default=os.path.expanduser("~/.staircase/ledger.jsonl"))
+    ap.add_argument("--scope-id", default="", help="the user id whose book is ranked (ledger scope)")
+    ap.add_argument("--fp", default="", help="ledger mode: the fingerprint")
+    ap.add_argument("--state", default="", choices=["", "done", "dismissed", "snoozed", "lifted"])
+    ap.add_argument("--reason", default="", choices=["", "done", "not_mine", "wrong", "not_now", "do_not_contact"])
+    ap.add_argument("--until", default="")
     ap.add_argument("--window", type=int, default=120, help="combined mode: the renewal window in days")
     ap.add_argument("--horizon", type=int, default=0, help="an action horizon the user named, in days")
     ap.add_argument("--me", default="", help="combined mode: the user's full name, as in renewal_owner")
@@ -459,13 +572,22 @@ def main():
     ap.add_argument("--other", default="", help="renewals mode: the other-renewal-owner lane CSV (pins and strip)")
     ap.add_argument("--totals", action="store_true", help="commit mode: print bucket counts and value sums")
     ap.add_argument("--json", action="store_true")
-    ap.add_argument("files", nargs="+")
+    ap.add_argument("files", nargs="*")
     a = ap.parse_args()
+    if a.mode == "ledger":
+        if not (a.fp and a.state):
+            sys.exit("ledger needs --fp and --state")
+        cmd_ledger(a)
+        return
+    if not a.files:
+        sys.exit(f"{a.mode} needs the pull CSVs")
     today = dt.date.fromisoformat(a.today)
     ov = load_overrides(a.override)
+    entries = load_ledger(a.ledger, today, a.scope_id)
     info = []
     if a.mode == "renewals":
-        res, dropped = score_renewals(join(a.files), today, a.horizon, ov, a.lens)
+        raw = {r["account_id"]: r for r in join(a.files)}
+        res, dropped = score_renewals(list(raw.values()), today, a.horizon, ov, a.lens)
         info = [f"rows: {len(res)} (check against the COUNT)"]
         if a.other:
             others = other_owner_rows(join([a.other]), today)
@@ -474,22 +596,30 @@ def main():
         if dropped:
             info.append("gaps dropped by the base rate (true on more than 80 percent): " + ", ".join(dropped))
         cols = ["rank", "pin", "priority", "kind", "account", "renewal_date", "days", "play", "bucket", "gaps",
-                "signals", "risk_basis", "due_soon", "note", "account_id"]
+                "signals", "risk_basis", "due_soon", "note", "fp", "account_id"]
     else:
         if len(a.files) < 2:
             sys.exit(f"{a.mode} needs OPPS.csv, then the book pulls (R1.csv R2.csv R3.csv)")
         opps, book = read_csv(a.files[0]), join(a.files[1:])
+        raw = {r["account_id"]: r for r in book}
         if a.mode == "expansion":
             res, info = ladder(book, opps, today, ov)
             info = [f"book rows: {len(book)} (check against the COUNT)"] + info
             cols = ["lane", "account", "offering", "category", "confidence", "momentum", "analyzed_at",
-                    "missing_or_blocker", "offerings", "renewal_date", "risk_note", "note", "account_id"]
+                    "missing_or_blocker", "offerings", "renewal_date", "risk_note", "note", "fp", "account_id"]
         else:
             if not a.me:
                 sys.exit("combined needs --me with the user's full name")
             res, info = combined(book, opps, today, a.window, a.horizon, a.me, ov)
             cols = ["rank", "pin", "priority", "kind", "account", "renewal_date", "play", "bucket", "gaps",
-                    "signals", "due_soon", "note", "account_id"]
+                    "signals", "due_soon", "note", "fp", "account_id"]
+    hidden = apply_ledger(res, raw, entries, today)
+    if a.mode == "expansion":
+        res.sort(key=lambda x: x["lane"] == "Out")
+    else:
+        res.sort(key=sort_key)
+    info.append(f"hidden by the user's clears ({len(hidden)}): " + ("; ".join(hidden) or "none")
+                + ". A row comes back when something newer happens (an event, a checkpoint, the snooze ends).")
     for x in res:
         for k in [k for k in x if k.startswith("_")]:
             x.pop(k)

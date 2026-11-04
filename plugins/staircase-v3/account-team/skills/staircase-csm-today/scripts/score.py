@@ -17,9 +17,10 @@ Run with `python3 -I`. Prints markdown for the model; never prints revenue figur
       Joins the pulls on account id, scores every trigger, prints the ranked candidates, the
       meetings strip, the stage-2 shortlist and what was left out (ledger, live, no trigger).
 
-  score.py ledger --ledger FILE --today YYYY-MM-DD --fp FP --state done|dismissed|snoozed
-                  --reason done|not_mine|wrong|not_now [--until YYYY-MM-DD] [--scope-id N]
-      Appends one dismissal line.
+  score.py ledger --ledger FILE --today YYYY-MM-DD --fp FP --state done|dismissed|snoozed|lifted
+                  --reason done|not_mine|wrong|not_now|do_not_contact [--until YYYY-MM-DD] [--scope-id N]
+      Appends one line. do_not_contact (fp <account_id>|*|*) drops customer-facing items on the account
+      and keeps internal ones; lifted cancels earlier lines with the same fp (and reason, when given).
 
   score.py check  --ledger FILE --today YYYY-MM-DD [--scope-id N] --fp FP [--fp FP ...]
       Prints which fingerprints the ledger suppresses (for stage-2 keys such as reply threads).
@@ -51,6 +52,15 @@ LANE_OF = {"reply_needed": "customer waiting", "meeting_followup": "customer wai
            "open_situation": "risk", "renewal_decision": "renewal",
            "renewal_checkpoint": "renewal", "record_check": "renewal",
            "expansion_ready": "grow"}
+# Ledger entries the renewals skill writes hide only their own family here, at account level.
+FAMILY = {"renewal_plan": {"renewal_checkpoint", "renewal_decision"},
+          "expansion_plan": {"expansion_ready"}}
+# Do not contact: these triggers put a message in front of the customer, so they drop; the rest
+# stay as internal actions (a Slack to the renewal owner, a close-out, a CRM fix).
+CUSTOMER_FACING = {"quiet", "one_sided_chase", "expansion_ready", "renewal_checkpoint", "stakeholder_change"}
+# A live two-way account drops only the items the live conversation already answers. A contact
+# change, an expansion signal or an open risk stays (attention 0.75): raise it in that conversation.
+LIVE_DROP = {"quiet", "one_sided_chase", "renewal_checkpoint"}
 
 
 # ---------------------------------------------------------------- configs
@@ -104,7 +114,11 @@ def cmd_pulls(a):
                     columns=[col("customer.id", "id"),
                              col("customer.email.customer_open_threads", "cust_open"),
                              col("customer.email.organization_open_threads", "org_open"),
-                             col("customer.buckets.health", "health_band")],
+                             col("customer.buckets.health", "health_band"),
+                             # static columns ride on the light pull: the parent's id (a Reference
+                             # column returns the id; a parent and child both in scope make one
+                             # item) and the account's page in Staircase (links on items and the board)
+                             col("customer.parent", "parent"), col("customer.url", "url")],
                     filter=flt, **page)
     c1 = [col("customer.id", "id")]
     keys = {"ChurnRisk": "i_churn", "Farewell": "i_farewell", "CustomerDark": "i_dark",
@@ -247,6 +261,12 @@ def load_ledger(path, today, scope):
                 continue
             if scope and e.get("scope") and str(e["scope"]) != str(scope):
                 continue
+            if e.get("state") == "lifted":
+                # a lift ("undo 2", "ok to contact X") cancels earlier entries with the same
+                # fingerprint; with a reason, only the entries that carry that reason
+                active = [x for x in active if not (x.get("fp") == e.get("fp") and
+                                                    (not e.get("reason") or x.get("reason") == e["reason"]))]
+                continue
             if e.get("state") == "snoozed" and e.get("until") and e["until"] < today.isoformat():
                 continue
             active.append(e)
@@ -275,15 +295,24 @@ def ledger_match(fp, entries, evdate=None):
     """exact: the same fingerprint, or the whole account marked not mine.
     account: a dismissal of any item on this account, and nothing newer than it has happened
     (evdate is the date of the evidence behind this candidate; None means no newer evidence).
-    check: a reply row whose thread key stage 2 must compare."""
+    check: a reply row whose thread key stage 2 must compare.
+    Do-not-contact entries never hide an item here (cmd_rank drops only customer-facing ones), and
+    another skill's entry covers only its own family of triggers."""
     acct, trig, key = (fp.split("|") + ["", ""])[:3]
     best = (None, None)
     for e in entries:
+        if e.get("reason") == "do_not_contact" or e.get("state") == "linked":
+            continue
         ea, et, ek = (e.get("fp", "").split("|") + ["", ""])[:3]
         if ea != acct:
             continue
         if et == "*" or (et == trig and (ek == "*" or ek == key)):
             return "exact", e
+        if et in FAMILY:
+            if trig not in FAMILY[et]:
+                continue
+        elif et not in LANE_OF:
+            continue
         at = when(e.get("at", ""), end_of_day=True)
         if at and (evdate is None or as_dt(evdate) <= at):
             best = ("account", e)
@@ -315,6 +344,10 @@ def cmd_rank(a):
                 events.setdefault(r.get("id", "").strip(), []).append(
                     (pd(r.get("date", "")), r.get("type", "").strip(), eid))
     ledger = load_ledger(a.ledger, today, a.scope_id)
+    dnc = {e.get("fp", "").split("|")[0] for e in ledger if e.get("reason") == "do_not_contact"}
+    # the user joined two accounts Staircase does not link ("Lumen Freight and Lumen Group are one")
+    linked = {e.get("fp", "").split("|")[0]: str(e["with"]) for e in ledger
+              if e.get("state") == "linked" and e.get("with")}
     n = len(rows)
 
     def age(s):
@@ -357,6 +390,7 @@ def cmd_rank(a):
         dropped.append(f"expansion momentum Heating: {round(s_heat * 100)} percent of the book (does not separate)")
 
     items, strip, live_dropped, ledger_out, notrig, stale = [], [], [], {}, [], []
+    dnc_dropped, folded = [], []
     prep_window = 168 if a.mode == "week" else 48
     for rid, r in rows.items():
         name = r.get("name", rid)
@@ -425,19 +459,33 @@ def cmd_rank(a):
                       + ("; the latest customer email is under 1 day old (account level: check the waiting thread's own date)" if sameday else ""), "?"))
         # meeting follow-up
         if lm is not None and lm <= 3:
+            # an email from our side since the meeting may have gone to someone else: it lowers the
+            # candidate (x 0.6) until stage 2 checks the meeting's participants, never drops it
             sent_after = oe is not None and oe < lm
-            if not sent_after:
-                c.append(("meeting_followup", 0.9, 1.0,
-                          f"meeting held {dm(pdt(r.get('last_mtg'), now))}, no email from our side since",
-                          r.get("last_mtg", "")[:16]))
-        # meeting prep and the strip
-        if nm is not None and 0 <= nm <= prep_window:
-            hi = (d is not None and d <= 90) or (risk and risk >= 4)
-            strip.append(dict(id=rid, name=name, when=r.get("next_mtg", ""), hi=bool(hi), rsrc=rsrc, ksrc=ksrc))
-            if hi and nm <= 48:
-                c.append(("meeting_prep", 0.8, 1.0, f"meeting {r.get('next_mtg', '')[:16]} UTC with "
-                          f"{'renewal in 90 days' if d is not None and d <= 90 else 'risk 4 or 5'}",
-                          r.get("next_mtg", "")[:16]))
+            c.append(("meeting_followup", 0.9, 0.6 if sent_after else 1.0,
+                      f"meeting held {dm(pdt(r.get('last_mtg'), now))}, "
+                      + ("someone on our side emailed the account since (account level: check the meeting's participants)"
+                         if sent_after else "no email from our side since"),
+                      r.get("last_mtg", "")[:16]))
+        # meeting prep and the strip: every meeting in the window is a candidate; stakes in the
+        # reports raise it, and stage 2 raises it when the read shows what the meeting is for
+        meets = nm is not None and 0 <= nm <= prep_window
+        if meets:
+            stake = []
+            if d is not None and -29 <= d <= 180:
+                stake.append(f"renewal in {d} days" if d >= 0 else "renewal date just passed")
+            if risk and risk >= 4:
+                stake.append(f"risk {int(risk)}")
+            if usable.get("i_churn") and r.get("i_churn", "").lower() == "true":
+                stake.append("ChurnRisk insight")
+            if cust_open >= 1:
+                stake.append(f"{cust_open} customer thread(s) open")
+            hi = bool(stake)
+            strip.append(dict(id=rid, name=name, when=r.get("next_mtg", ""), hi=hi, rsrc=rsrc, ksrc=ksrc))
+            u = (0.8 if hi else 0.5) if nm <= 48 else (0.6 if hi else 0.4)
+            c.append(("meeting_prep", u, 1.0, f"meeting {r.get('next_mtg', '')[:16]} UTC; "
+                      + (", ".join(stake) if stake else "nothing else at stake in the reports: the read decides"),
+                      r.get("next_mtg", "")[:16]))
         # fresh risk
         fr = last_event({"churn_risk", "exceptional_negative"}, 30)
         if fr is None:
@@ -463,16 +511,20 @@ def cmd_rank(a):
             c.append(("renewal_decision", 0.9, 1.0,
                       (f"renewal date {dm(ren)} passed and the account is still Active" if d < 0
                        else f"renewal in {d} days"), ren.isoformat()))
-        elif d is not None and d <= 120:
+        elif d is not None and d <= 180:
             rd = pd(r.get("ev_renewal_disc"))
             discussed = rd is not None and (today - rd).days <= 59
-            label = "cp60" if d <= 60 else "cp90" if d <= 90 else "cp120"
+            label = "cp60" if d <= 60 else "cp90" if d <= 90 else "cp120" if d <= 120 else "cp180"
             if not discussed:
-                u = 0.55 if d <= 60 else 0.45
-                if (usable.get("i_norenew") and r.get("i_norenew", "").lower() == "true") or (risk and risk >= 4):
-                    u = 0.7
-                c.append(("renewal_checkpoint", u, 1.0,
-                          f"renewal in {d} days; last renewal discussion {dm(rd)}",
+                flagged = (usable.get("i_norenew") and r.get("i_norenew", "").lower() == "true") or (risk and risk >= 4)
+                if label == "cp180":
+                    # 121 to 180 days: time for the value review that sets up the renewal conversation
+                    u = 0.55 if flagged else 0.4
+                    why = f"renewal in {d} days: value review before the renewal conversation"
+                else:
+                    u = 0.7 if flagged else 0.55 if d <= 60 else 0.45
+                    why = f"renewal in {d} days"
+                c.append(("renewal_checkpoint", u, 1.0, f"{why}; last renewal discussion {dm(rd)}",
                           f"{label}@{ren.isoformat()}"))
         if num(r.get("value")) == 0 and r.get("value") != "":
             c.append(("record_check", 0.7, 1.0, "revenue reads 0 on an Active account", "revenue0"))
@@ -486,21 +538,32 @@ def cmd_rank(a):
             ag = (today - fw[0]).days
             c.append(("stakeholder_change", 0.75 if ag <= 13 else 0.5, 1.0,
                       f"personnel-change (farewell) event {dm(fw[0])}", fw[2]))
-        # quiet and one-sided chase
+        # quiet and one-sided chase; a meeting in the window is the next touch, so the silence folds
+        # into the prep item ("raise it in the meeting") instead of becoming its own item
+        qc = None
         if (le is None or le > 21) and (lt is None or lt > 14):
-            c.append(("quiet", 0.6, 1.0,
-                      f"customer last engaged {dm(pdt(r.get('last_eng'), now))}; our last touch "
-                      f"{dm(pdt(r.get('last_touch'), now))}", (r.get("last_eng") or "never")[:10]))
+            qc = ("quiet", 0.6, 1.0,
+                  f"customer last engaged {dm(pdt(r.get('last_eng'), now))}; our last touch "
+                  f"{dm(pdt(r.get('last_touch'), now))}", (r.get("last_eng") or "never")[:10])
         elif (lt is not None and lt <= 14 and (le is None or le > 30)) or \
                 (org_open >= 3 and (ce is None or ce > 10) and (le is None or le > 10)):
-            c.append(("one_sided_chase", 0.55, 1.0,
-                      f"we touched {dm(pdt(r.get('last_touch'), now))}; customer last engaged "
-                      f"{dm(pdt(r.get('last_eng'), now))}; {org_open} of our threads open",
-                      (r.get("last_eng") or "never")[:10]))
+            qc = ("one_sided_chase", 0.55, 1.0,
+                  f"we touched {dm(pdt(r.get('last_touch'), now))}; customer last engaged "
+                  f"{dm(pdt(r.get('last_eng'), now))}; {org_open} of our threads open",
+                  (r.get("last_eng") or "never")[:10])
+        if qc and meets:
+            folded.append(f"{name} ({qc[0]})")
+            c = [(t, u, m, (w + f"; {qc[3]}: raise it in the meeting") if t == "meeting_prep" else w, k)
+                 for t, u, m, w, k in c]
+        elif qc:
+            c.append(qc)
         # expansion ready
         expl = num(r.get("exp"))
         hot = num(r.get("exp_hot")) or 0
-        lowrisk = (risk is not None and risk <= 2) or (not risk and health is not None and health >= 60)
+        # Average health is neutral, not a block: only a Low band (or a score under 40 with no band) is
+        band = (r.get("health_band") or "").lower()
+        lowrisk = (risk is not None and risk <= 2) or (not risk and (
+            band in ("average", "high") or (not band and health is not None and health >= 40)))
         if expl and expl >= 4 and hot >= 1 and lowrisk and cust_open == 0 and \
                 (not use_heat or r.get("mom") == "Heating"):
             c.append(("expansion_ready", 0.35, 1.0, f"expansion readiness {int(expl)}, "
@@ -546,7 +609,10 @@ def cmd_rank(a):
             return None
 
         for trig, u, m, why, key in c:
-            if trig not in REACTIVE and ast == "live" and a.mode != "takeover" and a.lane != "risk" and not pinned:
+            if rid in dnc and trig in CUSTOMER_FACING:
+                dnc_dropped.append(f"{name} ({trig})")
+                continue
+            if trig in LIVE_DROP and ast == "live" and a.mode != "takeover" and a.lane != "risk" and not pinned:
                 live_dropped.append(f"{name} ({trig})")
                 continue
             fp = f"{rid}|{trig}|{key}"
@@ -557,6 +623,7 @@ def cmd_rank(a):
             P = min(100.0, 100 * S * u * m * (1.0 if trig in REACTIVE else att))
             scored.append(dict(base, trigger=trig, U=u, P=P, trig_why=why, fp=fp, pin=pinned,
                                ledger="check" if hit == "check" else "",
+                               dnc=rid in dnc, group=[], group_ids=[],
                                wait=ce if trig == "reply_needed" else None))
         if not scored:
             continue
@@ -565,6 +632,28 @@ def cmd_rank(a):
         top = scored[0]
         top["also"] = [f"{x['trigger']}: {x['trig_why']}" for x in scored[1:]]
         items.append(top)
+
+    # Related accounts: a child whose parent is also in scope joins the parent's item. The member
+    # that stands for the group is a pinned one first, then the highest priority; the others move to
+    # its "also" line and are read with it.
+    groups = {}
+    for it in items:
+        par = rows.get(it["id"], {}).get("parent", "") or linked.get(it["id"], "")
+        groups.setdefault(par if par and par in rows else it["id"], []).append(it)
+    related = []
+    merged = []
+    for root, its in groups.items():
+        its.sort(key=lambda x: (not x["pin"], -x["P"]))
+        top = its[0]
+        for o in its[1:]:
+            top["group"].append(o["name"])
+            top["group_ids"].append(o["id"])
+            top["also"].append(f"{o['name']} (related account, one item): {o['trigger']}: {o['trig_why']}")
+            top["fps_more"] = top.get("fps_more", []) + [o["fp"]]
+        if len(its) > 1:
+            related.append(f"{top['name']} with {', '.join(top['group'])}")
+        merged.append(top)
+    items = merged
 
     if a.mode == "takeover":
         for it in items:
@@ -576,8 +665,13 @@ def cmd_rank(a):
     waits = [i for i in items if i["trigger"] == "reply_needed"]
     slot = max(waits, key=lambda i: (i["U"], i["wait"] or 0), default=None)
     short = items[:a.shortlist]
-    must = [i for i in items if i not in short and (i["trigger"] == "reply_needed" or i["pin"] or i["ledger"] == "check")]
-    short = sorted(short + must, key=lambda x: (not x["pin"], x["trigger"] != "reply_needed", -x["P"]))[:20]
+    # Week mode reads every account that meets this week: the read is what tells an EBR or a
+    # pricing call from a routine sync, and the reports cannot.
+    must = [i for i in items if i not in short and (i["trigger"] == "reply_needed" or i["pin"] or i["ledger"] == "check"
+                                                    or (a.mode == "week" and i["trigger"] == "meeting_prep"))]
+    cap = 26 if a.mode == "week" else 20
+    short = sorted(short + must, key=lambda x: (not x["pin"], x["trigger"] != "reply_needed",
+                                                x["trigger"] != "meeting_prep", -x["P"]))[:cap]
     short.sort(key=lambda x: -x["P"])
 
     pr = print
@@ -599,24 +693,36 @@ def cmd_rank(a):
     for i, it in enumerate(items, 1):
         mark = "slot: customer waiting" if it is slot else ("yes" if it in short else "")
         if it["pin"]:
-            mark += " (pinned: risk 4 or 5 renewal inside 60 days, stays on the list)"
-        pr(f"| {i} | {it['name']} | {it['id']} | {LANE_OF[it['trigger']]} | {it['trigger']} | {round(it['P'])} | "
+            mark += (" (pinned: risk 4 or 5 renewal inside 60 days, stays on the list; settled as closing,"
+                     " it moves to the Closing line)")
+        led = it["ledger"] + (" do not contact: internal actions only, no customer draft" if it["dnc"] else "")
+        acct = it["name"] + (f" (one item with {', '.join(it['group'])}: related accounts)" if it["group"] else "")
+        pr(f"| {i} | {acct} | {it['id']} | {LANE_OF[it['trigger']]} | {it['trigger']} | {round(it['P'])} | "
            f"{it['S']:.2f} | {it['U']:.2f} | {it['att']} | {it['trig_why']}; {'; '.join(it['why'])} | "
-           f"{' / '.join(it['also']) or ''} | {it['ledger']} | {mark} |")
+           f"{' / '.join(it['also']) or ''} | {led.strip()} | {mark} |")
     pr("\nFingerprints (for the ledger; a reply row's key is its thread key plus the date of the customer's last message, set in stage 2):")
     for i, it in enumerate(items, 1):
-        pr(f"- #{i} {it['fp']}")
+        pr(f"- #{i} {it['fp']}" + "".join(f"; {f}" for f in it.get("fps_more", [])))
     reply_ids = [int(i["id"]) for i in short if i["trigger"] == "reply_needed"]
-    other_ids = [int(i["id"]) for i in short if i["trigger"] != "reply_needed"]
+    other_ids = [int(x) for i in short if i["trigger"] != "reply_needed" for x in [i["id"]] + i["group_ids"]]
+    reply_ids += [int(x) for i in short if i["trigger"] == "reply_needed" for x in i["group_ids"]]
     pr("\n## Shortlist for stage 2")
     pr(f"- Reply rows (read 30 days): {json.dumps(reply_ids)}")
-    pr(f"- Other rows (read 90 days, latest 6 threads each): {json.dumps(other_ids)}")
+    pr(f"- Other rows (read 90 days, latest 6 threads each; up to 20 ids per call): {json.dumps(other_ids)}")
+    pages = [(i["name"], rows.get(i["id"], {}).get("url", "")) for i in short]
+    if any(u for _, u in pages):
+        pr("- Account pages (link the account name on its item): "
+           + "; ".join(f"{nm} {u}" for nm, u in pages if u))
     pr("\n## Left out")
     pr(f"- Hidden by the ledger ({len(ledger_out)} accounts): " + ("; ".join(
         f"{nm} ({e.get('state')}, {e.get('reason', '')}, {e.get('at')}"
         + (f", until {e['until']}" if e.get("until") else "") + f"; triggers hidden: {', '.join(t)})"
         for nm, (e, t) in sorted(ledger_out.items())) or "none")
        + ". An account comes back when something newer than the dismissal happens.")
+    pr(f"- Do not contact, customer-facing item dropped ({len(dnc_dropped)}): " + ("; ".join(dnc_dropped) or "none")
+       + ". Internal actions on these accounts stay; never draft to the customer.")
+    pr(f"- Quiet or chase folded into this week's meeting ({len(folded)}): " + ("; ".join(folded) or "none"))
+    pr(f"- Related accounts made one item ({len(related)}): " + ("; ".join(related) or "none"))
     pr(f"- Live two-way, proactive item dropped ({len(live_dropped)}): " + ("; ".join(live_dropped) or "none"))
     pr(f"- No trigger today ({len(notrig)}): " + ("; ".join(sorted(notrig)) or "none"))
     # an account with an item carries its stale date inside that item's why-now, not on the line
@@ -673,6 +779,8 @@ def cmd_ledger(a):
     line = {"fp": a.fp, "state": a.state, "reason": a.reason, "at": at}
     if a.until:
         line["until"] = a.until
+    if a.with_id:
+        line["with"] = str(a.with_id)
     if a.scope_id:
         line["scope"] = str(a.scope_id)
     os.makedirs(os.path.dirname(os.path.abspath(a.ledger)), exist_ok=True)
@@ -724,9 +832,10 @@ def main():
     lg.add_argument("--ledger", default=os.path.expanduser("~/.staircase/ledger.jsonl"))
     lg.add_argument("--today", required=True)
     lg.add_argument("--fp", required=True)
-    lg.add_argument("--state", required=True, choices=["done", "dismissed", "snoozed"])
-    lg.add_argument("--reason", required=True, choices=["done", "not_mine", "wrong", "not_now"])
+    lg.add_argument("--state", required=True, choices=["done", "dismissed", "snoozed", "lifted", "linked"])
+    lg.add_argument("--reason", required=True, choices=["done", "not_mine", "wrong", "not_now", "do_not_contact", ""])
     lg.add_argument("--until")
+    lg.add_argument("--with", dest="with_id", help="linked: the account id this one joins (one item)")
     lg.add_argument("--scope-id")
     lg.set_defaults(fn=cmd_ledger)
     ck = sub.add_parser("check")

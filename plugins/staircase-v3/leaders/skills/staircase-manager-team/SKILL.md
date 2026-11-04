@@ -113,7 +113,7 @@ Filter: the team filter, Active, and an `Or` of
 | Pull | Columns besides `customer.id` |
 |---|---|
 | P1, state | `customer.name`, `customer.<field>.full_name` for each field in use, `customer.renewal_date`, `customer.risk.risk_level`, `customer.revenue_converted` (tie-break only, never printed), `customer.last_touch`, `customer.event.next_event` |
-| P2, signals | `customer.name` (the sort key), `customer.last_lifecycle_event_date` for `churn_risk`, `churn`, `exceptional_negative`, `farewell` and `renewal_discussion` (one column each, labels from `eventType` options), `customer.event.last_event`, `customer.email.organization_last_sent` |
+| P2, signals | `customer.name` (the sort key), `customer.last_lifecycle_event_date` for `churn_risk`, `churn`, `exceptional_negative`, `farewell` and `renewal_discussion` (one column each, labels from `eventType` options), `customer.event.last_event`, `customer.email.organization_last_sent`, `customer.url` (the account's page: each item's `account_url`, `references/data-rules.md` rule 29) |
 
 P1 ran at 10 columns on a team using four role fields. If either pull times out, split it once.
 
@@ -180,7 +180,7 @@ Answers "team renewals", "what's renewing on my team", "renewals across my team 
 
 1. Scope (section 3) and the section 4.2 scalar COUNTs for the scope line (named distinct, pooled, whole team). No load rollup.
 2. **R1:** team filter, Active, `customer.renewal_date` InRange `[T, T+N-1]`; columns `customer.id`, `customer.name`, holder `full_name` per field, `customer.renewal_date`, `customer.risk.risk_level`, `customer.event.next_event`, `customer.last_touch`. Sort renewal date, then `customer.name`; page to the end; confirm with a scalar COUNT. Run R1 and R2 with the window widened to start at `<T-29>`: rows with a date passed since then sit at the top of the list, flagged "date passed <date>" (still-open decisions).
-3. **R2:** the same filter; `customer.id`, `customer.last_lifecycle_event_date` (`renewal_discussion`), `customer.relationship_score.stakeholders_count`, `customer.last_dm_touch`, `customer.last_lifecycle_event_date` (`farewell`).
+3. **R2:** the same filter; `customer.id`, `customer.last_lifecycle_event_date` (`renewal_discussion`), `customer.relationship_score.stakeholders_count`, `customer.last_dm_touch`, `customer.last_lifecycle_event_date` (`farewell`), `customer.url` (each row's `account_url`).
 4. **Flags per row:** risk 4 or 5; no meeting booked; no commercial discussion since `<T-89>` (the `renewal_discussion` event; use its label from metadata); one contact or fewer; a personnel change since `<T-29>`. Run the base-rate guard on each flag before showing it.
 5. **Older passed dates:** the section 4.4 record check (renewal before `<T-29>`): one scalar COUNT and an 8-row pull, one line.
 6. **Read the 5 soonest flagged renewals** (one `staircase_list_communications` call, `date_range` `["<T-29>", "<T>"]`, `per_account_limit` 5): where each renewal stands, its evidence ids in the trail. A thread contradicting a flag wins over the flag; show both with dates.
