@@ -482,7 +482,11 @@ def cmd_rank(a):
                 stake.append(f"{cust_open} customer thread(s) open")
             hi = bool(stake)
             strip.append(dict(id=rid, name=name, when=r.get("next_mtg", ""), hi=hi, rsrc=rsrc, ksrc=ksrc))
-            u = (0.8 if hi else 0.5) if nm <= 48 else (0.6 if hi else 0.4)
+            # today or tomorrow by the local calendar (this machine's zone), not a 48-hour clock: a
+            # call this afternoon must not lose to one 47 hours out
+            w = pdt(r.get("next_mtg"), now)
+            soon = w is not None and (w.astimezone().date() - now.astimezone().date()).days <= 1
+            u = (0.8 if hi else 0.5) if soon else (0.6 if hi else 0.4)
             c.append(("meeting_prep", u, 1.0, f"meeting {r.get('next_mtg', '')[:16]} UTC; "
                       + (", ".join(stake) if stake else "nothing else at stake in the reports: the read decides"),
                       r.get("next_mtg", "")[:16]))
@@ -515,17 +519,22 @@ def cmd_rank(a):
             rd = pd(r.get("ev_renewal_disc"))
             discussed = rd is not None and (today - rd).days <= 59
             label = "cp60" if d <= 60 else "cp90" if d <= 90 else "cp120" if d <= 120 else "cp180"
-            if not discussed:
-                flagged = (usable.get("i_norenew") and r.get("i_norenew", "").lower() == "true") or (risk and risk >= 4)
-                if label == "cp180":
-                    # 121 to 180 days: time for the value review that sets up the renewal conversation
-                    u = 0.55 if flagged else 0.4
-                    why = f"renewal in {d} days: value review before the renewal conversation"
-                else:
-                    u = 0.7 if flagged else 0.55 if d <= 60 else 0.45
-                    why = f"renewal in {d} days"
-                c.append(("renewal_checkpoint", u, 1.0, f"{why}; last renewal discussion {dm(rd)}",
-                          f"{label}@{ren.isoformat()}"))
+            flagged = (usable.get("i_norenew") and r.get("i_norenew", "").lower() == "true") or (risk and risk >= 4)
+            if label == "cp180":
+                # 121 to 180 days: time for the value review that sets up the renewal conversation
+                u = 0.55 if flagged else 0.4
+                why = f"renewal in {d} days: value review before the renewal conversation"
+            else:
+                u = 0.7 if flagged else 0.55 if d <= 60 else 0.45
+                why = f"renewal in {d} days"
+            if discussed:
+                # a renewal conversation in 60 days lowers the checkpoint; it never closes it (the
+                # event may be another product's, or a conversation that stalled)
+                u *= 0.5
+                why += f"; a renewal conversation {dm(rd)} (lowered, not closed: the read checks it)"
+            else:
+                why += f"; last renewal discussion {dm(rd)}"
+            c.append(("renewal_checkpoint", u, 1.0, why, f"{label}@{ren.isoformat()}"))
         if num(r.get("value")) == 0 and r.get("value") != "":
             c.append(("record_check", 0.7, 1.0, "revenue reads 0 on an Active account", "revenue0"))
         # stakeholder change
@@ -667,11 +676,13 @@ def cmd_rank(a):
     short = items[:a.shortlist]
     # Week mode reads every account that meets this week: the read is what tells an EBR or a
     # pricing call from a routine sync, and the reports cannot.
+    meets_ids = {m["id"] for m in strip}
+    week_meet = lambda i: a.mode == "week" and (i["id"] in meets_ids or any(g in meets_ids for g in i["group_ids"]))  # noqa: E731
     must = [i for i in items if i not in short and (i["trigger"] == "reply_needed" or i["pin"] or i["ledger"] == "check"
-                                                    or (a.mode == "week" and i["trigger"] == "meeting_prep"))]
+                                                    or week_meet(i))]
     cap = 26 if a.mode == "week" else 20
     short = sorted(short + must, key=lambda x: (not x["pin"], x["trigger"] != "reply_needed",
-                                                x["trigger"] != "meeting_prep", -x["P"]))[:cap]
+                                                not week_meet(x), -x["P"]))[:cap]
     short.sort(key=lambda x: -x["P"])
 
     pr = print
